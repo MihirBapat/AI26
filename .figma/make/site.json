@@ -1,0 +1,10 @@
+{
+  "description": "This platform connects students, training institutes, and employers in Maharashtra, offering skill assessments, industry demand insights, and tailored curriculum recommendations.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
