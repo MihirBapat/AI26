@@ -1,4 +1,5 @@
-import { useState, FormEvent } from 'react'
+import { useState } from 'react'
+import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ChevronLeft, CheckCircle2, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
@@ -7,8 +8,8 @@ export function GovLogin() {
   const navigate = useNavigate()
   const { login } = useAuth()
 
-  const [email, setEmail] = useState('official@skillbridge.gov.in')
-  const [password, setPassword] = useState('gov@123')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
@@ -140,11 +141,7 @@ export function GovLogin() {
             </Link>
           </div>
 
-          <div className="mt-8 p-4 rounded-xl border border-primary/20 bg-primary/5 text-sm">
-            <p className="font-semibold text-primary mb-1">Development Test Credentials:</p>
-            <p className="text-muted-foreground">Email: official@skillbridge.gov.in</p>
-            <p className="text-muted-foreground">Password: gov@123</p>
-          </div>
+
         </div>
       </div>
     </div>

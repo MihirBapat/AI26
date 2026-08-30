@@ -8,30 +8,33 @@ import { GovDashboard } from './pages/gov/Dashboard'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { ThemeProvider } from './components/theme-provider'
 import { AuthProvider } from './context/AuthContext'
+import { TooltipProvider } from '@/components/ui/tooltip'
 
 function App() {
   return (
     <ThemeProvider defaultTheme="system" storageKey="skillbridge-theme">
       <AuthProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/gov/login" element={<GovLogin />} />
-            <Route path="/gov/register" element={<GovRegister />} />
-            <Route
-              path="/gov/dashboard"
-              element={
-                <ProtectedRoute allowedRole="gov">
-                  <GovDashboard />
-                </ProtectedRoute>
-              }
-            />
-            
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </BrowserRouter>
+        <TooltipProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/gov/login" element={<GovLogin />} />
+              <Route path="/gov/register" element={<GovRegister />} />
+              <Route
+                path="/gov/dashboard"
+                element={
+                  <ProtectedRoute allowedRole="gov">
+                    <GovDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
       </AuthProvider>
     </ThemeProvider>
   )

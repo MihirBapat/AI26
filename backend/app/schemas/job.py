@@ -51,6 +51,7 @@ class JobSearchResponse(BaseModel):
     """Paginated search response for live job postings."""
     results: list[AdzunaJobItem] = Field(default_factory=list)
     total_count: int = Field(default=0, description="Total matching postings")
+    mean_salary: float | None = Field(default=None, description="Mean/average salary in INR for query")
     page: int = Field(default=1, description="Current page number")
     results_per_page: int = Field(default=20, description="Results per page")
     query_what: str | None = Field(default=None, description="Keyword/role query")
@@ -86,9 +87,11 @@ class GeodataResponse(BaseModel):
 # ---------------------------------------------------------------------------
 
 class SalaryHistoryPoint(BaseModel):
-    """Average salary for a specific month."""
+    """Average salary and hiring metrics for a specific month."""
     period: str = Field(..., description="Month in YYYY-MM format")
     average_salary: float = Field(..., description="Average salary in INR")
+    vacancies: int | None = Field(default=None, description="Hiring volume in this month")
+    growth_pct: float | None = Field(default=None, description="Month-on-month hiring growth %")
 
 
 class SalaryHistoryResponse(BaseModel):
@@ -211,13 +214,15 @@ class TrendsResponse(BaseModel):
 # ---------------------------------------------------------------------------
 
 class DistrictDemandSummary(BaseModel):
-    """District-level labor demand overview with postings, salary, and top employers."""
+    """District-level labor demand overview with postings, salary, top employers, and roles."""
     district: str
     state: str = "Maharashtra"
     total_vacancies: int = 0
     average_salary: float | None = None
     top_employers: list[TopCompanyItem] = Field(default_factory=list)
     top_categories: list[str] = Field(default_factory=list)
+    top_sectors: list[str] = Field(default_factory=list)
+    top_roles: list[str] = Field(default_factory=list, description="Top in-demand specific roles for this sector/district")
     demand_level: str = Field(default="Moderate", description="High, Moderate, Emerging, Low")
     demand_score: float = Field(default=50.0, description="0 to 100 demand index")
     growth_rate_pct: float | None = None

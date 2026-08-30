@@ -1,4 +1,5 @@
-import { useState, FormEvent } from 'react'
+import { useState } from 'react'
+import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ChevronLeft, CheckCircle2, Loader2, AlertCircle } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'

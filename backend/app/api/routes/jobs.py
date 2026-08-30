@@ -113,10 +113,12 @@ async def get_geodata_drilldown(
 @router.get("/districts/demand", response_model=DistrictDemandSummary)
 async def get_district_demand_summary(
     district: str = Query("Pune", description="District name in Maharashtra"),
+    sector: str | None = Query(None, description="Optional sector filter (e.g. IT-ITeS, Healthcare)"),
+    domain: str | None = Query(None, description="Optional domain / specialization filter"),
     role: str | None = Query(None, description="Optional role/skill to filter demand by"),
 ):
     """District-level labor demand overview with active postings, salary, and top hiring employers."""
-    return await job_service.get_district_demand_summary(district=district, role=role)
+    return await job_service.get_district_demand_summary(district=district, sector=sector, domain=domain, role=role)
 
 
 @router.get("/districts/heatmap", response_model=DistrictHeatmapResponse)

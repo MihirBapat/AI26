@@ -1,9 +1,10 @@
-import { useState, FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { useAuth, UserRole } from '@/context/AuthContext'
+import { useAuth } from '@/context/AuthContext'
+import type { UserRole } from '@/context/AuthContext'
 import { AlertCircle, Loader2 } from 'lucide-react'
 
 export function Register() {

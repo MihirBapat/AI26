@@ -1,6 +1,7 @@
-import { ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { Navigate, Link } from 'react-router-dom'
-import { useAuth, UserRole } from '@/context/AuthContext'
+import { useAuth } from '@/context/AuthContext'
+import type { UserRole } from '@/context/AuthContext'
 import { ShieldAlert, Loader2 } from 'lucide-react'
 
 interface ProtectedRouteProps {

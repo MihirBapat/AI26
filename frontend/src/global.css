@@ -93,11 +93,11 @@
     --border: oklch(0.9081 0.0026 56.3955);
     --input: oklch(0.9081 0.0026 56.3955);
     --ring: oklch(0.5127 0.2441 272.9812);
-    --chart-1: oklch(0.5127 0.2441 272.9812);
-    --chart-2: oklch(0.5122 0.0202 55.8916);
-    --chart-3: oklch(0.4798 0.1557 278.0435);
-    --chart-4: oklch(0.8067 0.0168 56.1458);
-    --chart-5: oklch(0.7729 0.0856 283.4534);
+    --chart-1: #1d4ed8;
+    --chart-2: #2563eb;
+    --chart-3: #3b82f6;
+    --chart-4: #60a5fa;
+    --chart-5: #93c5fd;
     --radius: 0.5rem;
     --sidebar: oklch(0.9696 0.0009 56.4245);
     --sidebar-foreground: oklch(0.2704 0.0089 55.9824);
@@ -149,11 +149,11 @@
     --border: oklch(0.3017 0.0104 55.9614);
     --input: oklch(0.3017 0.0104 55.9614);
     --ring: oklch(0.5875 0.2039 277.3624);
-    --chart-1: oklch(0.5875 0.2039 277.3624);
-    --chart-2: oklch(0.6005 0.0242 55.8781);
-    --chart-3: oklch(0.4934 0.2031 275.2704);
-    --chart-4: oklch(0.4199 0.0159 55.9126);
-    --chart-5: oklch(0.4112 0.1298 278.3070);
+    --chart-1: #3b82f6;
+    --chart-2: #60a5fa;
+    --chart-3: #2563eb;
+    --chart-4: #93c5fd;
+    --chart-5: #1d4ed8;
     --sidebar: oklch(0.1581 0.0034 56.1394);
     --sidebar-foreground: oklch(0.9237 0.0043 56.3699);
     --sidebar-primary: oklch(0.5875 0.2039 277.3624);
@@ -196,4 +196,22 @@
   html {
     @apply font-sans;
   }
+  .maplibregl-popup-content {
+    @apply bg-transparent! shadow-none! p-0! rounded-none!;
+    }
+  .maplibregl-popup-tip {
+    @apply hidden!;
+    }
+  .maplibregl-ctrl-attrib {
+    @apply bg-background! text-muted-foreground! border-border! rounded-md! border! shadow-sm!;
+    }
+  .maplibregl-ctrl-attrib a {
+    @apply text-muted-foreground!;
+    }
+  .maplibregl-ctrl-attrib a:hover {
+    @apply text-foreground!;
+    }
+  .maplibregl-ctrl-attrib-button {
+    @apply bg-transparent! dark:invert;
+    }
 }

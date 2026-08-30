@@ -111,8 +111,15 @@ class CacheService:
             except Exception:
                 pass
 
-        if key in self._memory_cache:
-            del self._memory_cache[key]
+    async def flush(self) -> bool:
+        """Clear all cached keys in Redis and in-memory cache."""
+        client = await self.get_redis_client()
+        if client is not None:
+            try:
+                await client.flushdb()
+            except Exception:
+                pass
+        self._memory_cache.clear()
         return True
 
     async def is_redis_alive(self) -> bool:

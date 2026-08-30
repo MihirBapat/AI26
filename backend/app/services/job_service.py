@@ -6,6 +6,7 @@ occupations, and Maharashtra district heatmaps.
 """
 
 import logging
+import re
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, joinedload
 
@@ -69,6 +70,199 @@ MAHARASHTRA_DISTRICTS = [
     {"name": "Nandurbar", "lat": 21.3690, "lon": 74.2384, "code": "NDB", "weight": 0.60, "top_sectors": ["Chili Processing", "Wind Power", "Forest Produce"], "top_roles": ["Wind Turbine Maintenance", "Spices Processing Tech", "Electrician", "Fitter"]},
     {"name": "Palghar", "lat": 19.6967, "lon": 72.7699, "code": "PAL", "weight": 0.92, "top_sectors": ["Chemicals", "Engineering", "Packaging"], "top_roles": ["Chemical Operator", "Packaging Supervisor", "Machine Operator", "Fitter"]},
     {"name": "Mumbai Suburban", "lat": 19.1245, "lon": 72.8530, "code": "SUB", "weight": 1.50, "top_sectors": ["IT-ITeS", "Media", "Retail", "Healthcare"], "top_roles": ["Software Engineer", "Video Editor", "Nurse", "Retail Manager"]},
+]
+
+
+SECTOR_ROLE_PATTERNS: list[tuple[str, list[str]]] = [
+    (r"\b(sport|sports|fitness|physical\s+education|gym|leisure|athletics|yoga)\b", [
+        "Fitness Trainer & Gym Instructor",
+        "Sports Coach & Physical Trainer",
+        "Sports Nutritionist",
+        "Physiotherapy Assistant",
+        "Recreation & Facility Manager",
+    ]),
+    (r"\b(agri|agriculture|farming|crop|soil|horticulture|botany|dairy|poultry|fishery|bio-farming|animal\s+husbandry)\b", [
+        "Agronomist & Soil Health Specialist",
+        "Precision Farming Technician",
+        "Agri Drone Pilot & Surveyor",
+        "Organic Farm & Greenhouse Manager",
+        "Post-Harvest & Cold Chain Lead",
+    ]),
+    (r"\b(it|ites|it-ites|information\s+technology|software|developer|programming|cyber|cloud|ai|full\s*stack|devops)\b", [
+        "DevOps Engineer",
+        "Software Development Engineer (SDE)",
+        "Cloud Solutions Architect",
+        "Full Stack Developer",
+        "Data Engineer / AI Specialist",
+    ]),
+    (r"\b(auto|automotive|automobile|vehicle|ev|electric\s+vehicle|powertrain|motor)\b", [
+        "EV Powertrain Engineer",
+        "Automotive Embedded Systems Specialist",
+        "Vehicle Quality Assurance Inspector",
+        "CNC Machine Operator",
+        "Mechatronics Assembly Technician",
+    ]),
+    (r"\b(bank|banking|bfsi|finance|financial|insurance|wealth|fintech|audit|tax|accounting)\b", [
+        "Financial Risk Analyst",
+        "Wealth Management Advisor",
+        "Credit Risk Underwriter",
+        "Statutory Compliance Officer",
+        "Fintech Backend Developer",
+    ]),
+    (r"\b(health|healthcare|nursing|medical|hospital|clinic|doctor|patient|allied\s+health)\b", [
+        "Critical Care & ICU Nurse",
+        "Medical Laboratory Technologist",
+        "Pharma Quality Control Specialist",
+        "Clinical Research Coordinator",
+        "Biomedical Equipment Technician",
+    ]),
+    (r"\b(pharma|pharmaceutical|drug|formulation|clinical|biotech)\b", [
+        "Pharma Quality Control Specialist",
+        "Formulation R&D Associate",
+        "Regulatory Affairs Executive",
+        "Clinical Research Coordinator",
+        "Packaging Quality Inspector",
+    ]),
+    (r"\b(manufactur|manufacturing|production|fabrication|machin|foundry|welding|assembly)\b", [
+        "Production & Assembly Supervisor",
+        "Industrial Automation Technician",
+        "Tool & Die Specialist",
+        "Plant Maintenance Engineer",
+        "Quality Assurance Manager",
+    ]),
+    (r"\b(capital\s+goods|heavy\s+machinery|hydraulic|industrial\s+equipment)\b", [
+        "CNC Heavy Machining Specialist",
+        "Industrial Hydraulic Technician",
+        "Tool & Die Design Engineer",
+        "Plant Quality Inspector",
+        "Heavy Equipment Assembler",
+    ]),
+    (r"\b(construct|construction|infrastructure|building|civil|masonry|carpentry|plumbing)\b", [
+        "Site Structural Engineer",
+        "BIM Modeler & CAD Draftsman",
+        "Industrial Electrical Lineman",
+        "Safety & EHS Officer",
+        "HVAC & Plumbing Supervisor",
+    ]),
+    (r"\b(apparel|garment|fashion|sewing|clothing|tailoring)\b", [
+        "Garment Production Supervisor",
+        "Textile Quality Inspector",
+        "Fashion CAD Pattern Maker",
+        "Industrial Sewing Specialist",
+        "Apparel Merchandiser",
+    ]),
+    (r"\b(textile|handloom|spinning|weaving|dyeing|fabric|yarn)\b", [
+        "Spinning & Weaving Master",
+        "Textile Quality Inspector",
+        "Dyeing & Printing Supervisor",
+        "Garment CAD Pattern Maker",
+        "Textile Merchandiser",
+    ]),
+    (r"\b(electron|electronics|semiconductor|vlsi|smt|pcb|embedded|hardware)\b", [
+        "PCB Design & Assembly Engineer",
+        "SMT Line Technician",
+        "Embedded Hardware Specialist",
+        "Hardware QA Tester",
+        "Microcontroller Programmer",
+    ]),
+    (r"\b(aerospace|aviation|aircraft|avionics|drone|flight)\b", [
+        "Avionics Maintenance Tech",
+        "Aerospace Systems Engineer",
+        "Drone Assembly Specialist",
+        "Aircraft Maintenance Fitter",
+        "Flight Operations Coordinator",
+    ]),
+    (r"\b(beauty|wellness|salon|spa|cosmet|hair|makeup|skin|grooming)\b", [
+        "Clinical Cosmetologist",
+        "Spa & Wellness Therapist",
+        "Hair Stylist & Color Specialist",
+        "Aesthetic Skin Practitioner",
+        "Salon Operations Manager",
+    ]),
+    (r"\b(chem|chemical|petrochem|refinery|distillation|paint)\b", [
+        "Chemical Process Operator",
+        "Chemical Lab Analyst",
+        "Safety & EHS Inspector",
+        "Quality Control Chemist",
+        "Industrial Distillation Specialist",
+    ]),
+    (r"\b(logist|logistics|warehouse|warehousing|supply\s+chain|freight|courier|transport)\b", [
+        "Supply Chain Operations Lead",
+        "Warehouse Logistics Supervisor",
+        "Inventory Planning Analyst",
+        "Fleet & Dispatch Coordinator",
+        "Cold Chain Storage Tech",
+    ]),
+    (r"\b(retail|e-commerce|ecommerce|store|shop|merchandis|sales|fmcg)\b", [
+        "Retail Store Operations Manager",
+        "E-Commerce Category Lead",
+        "Visual Merchandiser",
+        "Customer Experience Specialist",
+        "Inventory & Replenishment Planner",
+    ]),
+    (r"\b(tour|tourism|hospitality|hotel|catering|culinary|food|restaurant|travel|baking|bakery)\b", [
+        "Executive Chef / Sous Chef",
+        "Hotel Front Office Executive",
+        "Food & Beverage Manager",
+        "Hospitality Operations Specialist",
+        "Travel & Tour Coordinator",
+    ]),
+    (r"\b(energy|power|renewable|solar|wind|grid|electricity|hydro)\b", [
+        "Solar PV Plant Engineer",
+        "Wind Turbine Maintenance Tech",
+        "Energy Storage Specialist",
+        "Power Grid Operator",
+        "Energy Audit Specialist",
+    ]),
+    (r"\b(educat|education|teaching|trainer|training|academic|school|tutor|instruction)\b", [
+        "Technical Skills Trainer",
+        "Curriculum Development Specialist",
+        "EdTech Instructional Designer",
+        "Academic Coordinator",
+        "STEM Educator",
+    ]),
+    (r"\b(media|entertainment|design|graphics|animation|film|video|broadcast|ui/ux)\b", [
+        "UI/UX Product Designer",
+        "Digital Marketing & SEO Lead",
+        "Motion Graphics / 3D Animator",
+        "Content & Brand Strategist",
+        "Video Editor & Producer",
+    ]),
+    (r"\b(leather|footwear|tannery)\b", [
+        "Leather Goods Pattern Maker",
+        "Footwear Assembly Technician",
+        "Tannery Quality Inspector",
+        "Leather Cutting Specialist",
+        "Finishing Operator",
+    ]),
+    (r"\b(mining|mineral|quarry|coal)\b", [
+        "Mining Safety Officer",
+        "Heavy Earthmoving Machinery Operator",
+        "Underground Ventilation Tech",
+        "Mineral Processing Specialist",
+        "Mine Surveyor",
+    ]),
+    (r"\b(plastic|rubber|polymer|moulding|extrusion)\b", [
+        "Injection Moulding Specialist",
+        "Extrusion Machine Operator",
+        "Polymer Quality Control Analyst",
+        "Blow Moulding Technician",
+        "Tool & Die Maintenance Tech",
+    ]),
+    (r"\b(print|printing|packaging|paper|publishing)\b", [
+        "Offset Printing Machine Operator",
+        "Digital Print Pre-Press Tech",
+        "Packaging Design & Quality Lead",
+        "Flexographic Printing Specialist",
+        "Screen Printing Technician",
+    ]),
+    (r"\b(tobacco)\b", [
+        "Leaf Curing & Processing Tech",
+        "Agri Quality Control Officer",
+        "Packaging Machine Operator",
+        "Inventory Supervisor",
+        "Safety & Compliance Inspector",
+    ]),
 ]
 
 
@@ -147,40 +341,115 @@ class JobService:
     async def get_district_demand_summary(
         self,
         district: str,
+        sector: str | None = None,
+        domain: str | None = None,
         role: str | None = None,
     ) -> DistrictDemandSummary:
         """District-level labor demand overview with live Adzuna postings, salary, and top employers."""
-        cache_key = f"job:district_demand:{district.lower()}:{str(role).lower()}"
+        # Determine query parameters
+        target_sector = sector
+        target_what = domain or role
+        
+        # If only role was provided, check if it's a sector or a specific role
+        if not target_sector and role:
+            if adzuna_service.resolve_category_tag(role):
+                target_sector = role
+                target_what = None
+            else:
+                target_what = role
+
+        cache_key = f"job:district_demand:{district.lower()}:{str(target_sector).lower()}:{str(target_what).lower()}"
         cached = await cache_service.get(cache_key)
         if cached:
             return DistrictDemandSummary(**cached)
 
-        # 1. Search live postings in this district
-        search_res = await adzuna_service.search_jobs(what=role, where=district, results_per_page=10)
+        # 1. Search live postings in this district with category + domain keyword
+        search_res = await adzuna_service.search_jobs(what=target_what, category=target_sector, where=district, results_per_page=10)
         # 2. Get top hiring companies in this district
-        top_comp_res = await adzuna_service.get_top_companies(what=role, where=district)
+        top_comp_res = await adzuna_service.get_top_companies(what=target_what or target_sector, where=district)
         # 3. Get salary history for trend
-        sal_res = await adzuna_service.get_salary_history(locations=["India", "Maharashtra", district], what=role)
+        sal_res = await adzuna_service.get_salary_history(locations=["India", "Maharashtra", district], category=target_sector, what=target_what)
 
-        avg_salary = 420000.0
-        if sal_res.history:
+        # Prioritize live mean salary from search results, then latest historical month
+        avg_salary = search_res.mean_salary
+        if not avg_salary and sal_res.history:
             avg_salary = sal_res.history[-1].average_salary
+        if not avg_salary:
+            avg_salary = 420000.0
 
         total_vacancies = search_res.total_count
-        demand_score = min(100.0, max(20.0, total_vacancies * 0.45 + 30.0))
-        demand_lvl = "High" if demand_score >= 75 else ("Moderate" if demand_score >= 50 else "Emerging")
+        
+        # Calculate real dynamic demand score
+        if total_vacancies > 0:
+            import math
+            # 1 vacancy -> 30, 10 -> 50, 100 -> 70, 1000 -> 90, 5000+ -> 100
+            demand_score = min(100.0, max(25.0, 30.0 + math.log10(max(total_vacancies, 1)) * 20.0))
+        else:
+            demand_score = 25.0
 
-        # Find matching district preset
+        # Find matching district preset for sector context
         matched_dist = next((d for d in MAHARASHTRA_DISTRICTS if d["name"].lower() == district.lower()), None)
+        
+        # Only if live API failed/is unconfigured, use fallback simulation
+        if search_res.is_fallback and matched_dist:
+            base_vacancies = 48500
+            weight = matched_dist["weight"]
+            v_count = int(base_vacancies * (weight / 36.0) * 1.8)
+            matching_sector = False
+            filter_text = target_what or target_sector or ''
+            if filter_text:
+                matching_sector = any(filter_text.lower() in s.lower() for s in matched_dist["top_sectors"])
+                v_count = int(v_count * (0.8 if matching_sector else 0.2))
+                jitter = (len(filter_text) * 43) % 200
+                v_count += jitter
+            total_vacancies = v_count
+            demand_score = min(100.0, max(15.0, (matched_dist["weight"] / 1.6) * 100.0 * (1.0 if not filter_text else (0.85 if matching_sector else 0.6))))
+            
+        demand_lvl = "High" if demand_score >= 75 else ("Moderate" if demand_score >= 50 else "Emerging")
         top_sectors = matched_dist["top_sectors"] if matched_dist else ["Manufacturing", "Services", "Engineering"]
+
+        # Determine top 5 specific in-demand roles for this sector/district
+        top_roles: list[str] = []
+        search_key = (target_sector or target_what or '').strip()
+
+        # 1. If target sector is specified, lookup directly in regex patterns
+        if search_key:
+            for pattern, roles_list in SECTOR_ROLE_PATTERNS:
+                if re.search(pattern, search_key, re.IGNORECASE):
+                    top_roles = list(roles_list[:5])
+                    break
+
+        # 2. Check Adzuna category tag
+        if not top_roles and (target_sector or target_what):
+            resolved_cat = adzuna_service.resolve_category_tag(target_sector or target_what)
+            if resolved_cat:
+                for pattern, roles_list in SECTOR_ROLE_PATTERNS:
+                    if re.search(pattern, resolved_cat, re.IGNORECASE):
+                        top_roles = list(roles_list[:5])
+                        break
+
+        # 3. If district-wide (all sectors), use district top roles
+        if not top_roles and matched_dist:
+            top_roles = list(matched_dist.get("top_roles", [])[:5])
+
+        # 4. Fallback defaults
+        if not top_roles:
+            top_roles = [
+                "DevOps Engineer",
+                "Software Development Engineer (SDE)",
+                "EV Powertrain Engineer",
+                "Financial Risk Analyst",
+                "Critical Care Nurse",
+            ]
 
         summary = DistrictDemandSummary(
             district=district,
             state="Maharashtra",
             total_vacancies=total_vacancies,
-            average_salary=avg_salary,
+            average_salary=round(avg_salary, 2),
             top_employers=top_comp_res.leaderboard,
             top_sectors=top_sectors,
+            top_roles=top_roles[:5],
             demand_level=demand_lvl,
             demand_score=round(demand_score, 1),
             growth_rate_pct=7.2 if sal_res.trend_direction == "upward" else 2.1,
