@@ -15,16 +15,20 @@ class Settings(BaseSettings):
     )
 
 
-    DATABASE_URL: str
+    DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/skill_platform"
 
+    # JWT Authentication & Authorization Settings
+    JWT_SECRET_KEY: str = "dev-secret-key-change-in-production-1234567890"
+    JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    COOKIE_SECURE: bool = False
+    COOKIE_SAMESITE: str = "lax"
 
     APP_NAME: str = "Skill Alignment Platform"
     APP_VERSION: str = "0.1.0"
     DEBUG: bool = False
 
-
-    CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:5173"]
-
+    CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:5173"]
 
     EXCEL_PATH: str = "docs/SkillIndiaDigital_AllCourses.xlsx"
 
@@ -39,6 +43,7 @@ class Settings(BaseSettings):
     # Redis Settings
     REDIS_URL: str = "redis://localhost:6379/0"
     REDIS_ENABLED: bool = True
+
 
 
 @lru_cache

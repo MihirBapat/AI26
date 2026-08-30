@@ -226,13 +226,11 @@ class Course(TimestampMixin, Base):
 
 
     search_vector: Mapped[str | None] = mapped_column(
-        TSVECTOR,
-        Computed(
-            "to_tsvector('english', coalesce(title, '') || ' ' || coalesce(short_description, '') || ' ' || coalesce(job_role, ''))",
-            persisted=True,
-        ),
+        TSVECTOR().with_variant(Text, "sqlite"),
         nullable=True,
     )
+
+
 
 
     provider: Mapped["Provider | None"] = relationship(back_populates="courses")
