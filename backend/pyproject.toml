@@ -6,21 +6,20 @@ readme = "README.md"
 authors = [
     { name = "Async-NickL", email = "nikhilkole.html@gmail.com" }
 ]
-requires-python = ">=3.14"
+requires-python = ">=3.11"
 dependencies = [
     "alembic>=1.19.1",
+    "argon2-cffi>=23.1.0",
+    "bcrypt>=4.1.0",
+    "email-validator>=2.1.0",
     "fastapi[standard]>=0.141.1",
     "openpyxl>=3.1.0",
     "pandas>=2.2.0",
     "psycopg2-binary>=2.9.12",
     "pydantic-settings>=2.15.0",
+    "pyjwt>=2.8.0",
     "python-dotenv>=1.2.3",
     "sqlalchemy>=2.0.52",
 ]
 
-[project.scripts]
-backend = "backend:main"
 
-[build-system]
-requires = ["uv_build>=0.12.7,<0.13.0"]
-build-backend = "uv_build"
