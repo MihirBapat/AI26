@@ -14,11 +14,19 @@ settings = get_settings()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifecycle — startup / shutdown hooks."""
+    from app.db.base import Base
+    from app.db.session import engine
+    import app.models  # Ensures all models (User, Course, Lookups) are registered
+
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception:
+        pass
 
     yield
 
-    from app.db.session import engine
     engine.dispose()
+
 
 
 app = FastAPI(

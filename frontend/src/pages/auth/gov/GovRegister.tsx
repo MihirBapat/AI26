@@ -1,15 +1,47 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { ChevronLeft, Landmark, CheckCircle2 } from 'lucide-react'
+import type { FormEvent } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { ChevronLeft, CheckCircle2, Loader2, AlertCircle } from 'lucide-react'
+import { useAuth } from '@/context/AuthContext'
 
 export function GovRegister() {
+  const navigate = useNavigate()
+  const { register } = useAuth()
+
   const [formData, setFormData] = useState({
     fullName: '',
-    adminId: '',
     email: '',
     password: '',
     confirmPassword: '',
   })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault()
+    setErrorMsg(null)
+
+    if (formData.password !== formData.confirmPassword) {
+      setErrorMsg('Passwords do not match.')
+      return
+    }
+
+    if (formData.password.length < 6) {
+      setErrorMsg('Password must be at least 6 characters long.')
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      await register(formData.fullName, formData.email, formData.password, 'gov')
+      navigate('/gov/dashboard', { replace: true })
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Registration failed. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   return (
     <div className="min-h-screen flex w-full bg-background font-sans">
@@ -53,49 +85,46 @@ export function GovRegister() {
           </Link>
 
           <h2 className="text-3xl font-bold text-foreground mb-2 mt-4">Government Registration</h2>
-          <p className="text-muted-foreground mb-8">Register your official credentials to access the platform.</p>
+          <p className="text-muted-foreground mb-6">Register your official credentials to access the platform.</p>
 
-          <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+          {errorMsg && (
+            <div className="mb-6 p-4 rounded-xl border border-destructive/30 bg-destructive/10 text-destructive text-sm flex items-start gap-3">
+              <AlertCircle className="size-5 shrink-0 mt-0.5" />
+              <span>{errorMsg}</span>
+            </div>
+          )}
+
+          <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground block">Full Name</label>
               <input
                 type="text"
+                required
                 className="w-full px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                placeholder="e.g. Anjali Sharma"
+                placeholder="e.g. Dr. Anjali Sharma"
                 value={formData.fullName}
                 onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground block">Official ID</label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                  placeholder="e.g. GOV-001"
-                  value={formData.adminId}
-                  onChange={(e) => setFormData({ ...formData, adminId: e.target.value })}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground block">Email</label>
-                <input
-                  type="email"
-                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                  placeholder="official@skillbridge.gov.in"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                />
-              </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground block">Official Email</label>
+              <input
+                type="email"
+                required
+                className="w-full px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                placeholder="official@skillbridge.gov.in"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground block">Password</label>
                 <input
                   type="password"
+                  required
                   className="w-full px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                   placeholder="Create password"
                   value={formData.password}
@@ -104,9 +133,10 @@ export function GovRegister() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground block">Confirm</label>
+                <label className="text-sm font-medium text-foreground block">Confirm Password</label>
                 <input
                   type="password"
+                  required
                   className="w-full px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                   placeholder="Confirm password"
                   value={formData.confirmPassword}
@@ -117,9 +147,17 @@ export function GovRegister() {
 
             <button
               type="submit"
-              className="w-full bg-primary text-primary-foreground py-2.5 rounded-xl font-medium hover:opacity-90 transition-opacity mt-6"
+              disabled={isSubmitting}
+              className="w-full bg-primary text-primary-foreground py-2.5 rounded-xl font-medium hover:opacity-90 transition-opacity mt-6 flex items-center justify-center gap-2 disabled:opacity-50"
             >
-              Sign Up
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  <span>Creating Account...</span>
+                </>
+              ) : (
+                <span>Register Government Account</span>
+              )}
             </button>
           </form>
 

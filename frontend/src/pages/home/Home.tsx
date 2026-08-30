@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ThemeToggle } from '@/components/ThemeToggle'
-import { Landmark, BookOpen, Briefcase, User, HelpCircle, X } from 'lucide-react'
+import { Landmark, BookOpen, Briefcase, User, HelpCircle, X, UserCheck, LogOut } from 'lucide-react'
+import { useAuth } from '@/context/AuthContext'
 
 const ROLES = [
   {
@@ -33,25 +34,33 @@ const ROLES = [
 export function Home() {
   const [isHelpOpen, setIsHelpOpen] = useState(false)
   const navigate = useNavigate()
+  const { user, isAuthenticated, logout } = useAuth()
 
   useEffect(() => {
-    const userStr = localStorage.getItem('currentUser')
-    if (userStr) {
-      try {
-        const user = JSON.parse(userStr)
-        if (user.role === 'gov') {
-          navigate('/gov/dashboard', { replace: true })
-        }
-      } catch (error) {
-
+    if (isAuthenticated && user) {
+      if (user.role === 'gov') {
+        navigate('/gov/dashboard', { replace: true })
       }
     }
-  }, [navigate])
+  }, [isAuthenticated, user, navigate])
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative font-sans text-foreground">
       
-      <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 flex items-center gap-3">
+        {isAuthenticated && user && (
+          <div className="flex items-center gap-2 bg-card px-3 py-1.5 rounded-full border border-border text-sm">
+            <UserCheck className="size-4 text-primary" />
+            <span className="font-medium text-foreground">{user.full_name}</span>
+            <button
+              onClick={() => logout()}
+              className="text-muted-foreground hover:text-destructive transition-colors ml-1"
+              title="Sign Out"
+            >
+              <LogOut className="size-3.5" />
+            </button>
+          </div>
+        )}
         <ThemeToggle />
       </div>
 
@@ -76,22 +85,22 @@ export function Home() {
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-4xl">
-          {ROLES.map((role) => {
-            const Icon = role.icon
+          {ROLES.map((roleItem) => {
+            const Icon = roleItem.icon
             return (
               <Link
-                key={role.title}
-                to={role.href}
+                key={roleItem.title}
+                to={roleItem.href}
                 className="flex flex-col p-6 sm:p-8 rounded-2xl border-2 border-border bg-card shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary"
               >
                 <div className="size-12 rounded-full flex items-center justify-center mb-6 bg-primary/10 text-primary shadow-sm">
                   <Icon className="size-6" />
                 </div>
                 <h3 className="text-xl font-semibold text-card-foreground mb-3">
-                  {role.title}
+                  {roleItem.title}
                 </h3>
                 <p className="text-muted-foreground text-sm leading-relaxed">
-                  {role.description}
+                  {roleItem.description}
                 </p>
               </Link>
             )

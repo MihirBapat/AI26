@@ -28,8 +28,11 @@ from app.models.lookups import (
     Tag,
 )
 
+from app.models.user import User
+
 __all__ = [
     "TimestampMixin",
+    "User",
 
     "Sector",
     "Domain",
@@ -57,3 +60,4 @@ __all__ = [
     "CourseProductType",
     "CourseSkillSet",
 ]
+
