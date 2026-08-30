@@ -28,6 +28,18 @@ class Settings(BaseSettings):
 
     EXCEL_PATH: str = "docs/SkillIndiaDigital_AllCourses.xlsx"
 
+    # Adzuna API Settings
+    ADZUNA_APP_ID: str = ""
+    ADZUNA_APP_KEY: str = ""
+    ADZUNA_COUNTRY: str = "in"
+    ADZUNA_BASE_URL: str = "https://api.adzuna.com/v1/api/jobs"
+    ADZUNA_TIMEOUT_SECONDS: float = 12.0
+    ADZUNA_CACHE_TTL_SECONDS: int = 3600
+
+    # Redis Settings
+    REDIS_URL: str = "redis://localhost:6379/0"
+    REDIS_ENABLED: bool = True
+
 
 @lru_cache
 def get_settings() -> Settings:
