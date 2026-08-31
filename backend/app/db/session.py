@@ -26,9 +26,12 @@ try:
     with engine.connect() as conn:
         pass
 except Exception as e:
-    print(f"[WARN] Could not connect to primary database ({db_url}): {e}")
-    print("       Falling back to local SQLite database ('sqlite:///./skill_platform.db') for seamless operation.")
-    db_url = "sqlite:///./skill_platform.db"
+    from pathlib import Path
+    backend_dir = Path(__file__).resolve().parent.parent.parent
+    db_file = (backend_dir / "skill_platform.db").as_posix()
+    db_url = f"sqlite:///{db_file}"
+    print(f"[WARN] Could not connect to primary database: {e}")
+    print(f"       Falling back to local SQLite database ('{db_url}') for seamless operation.")
     engine_kwargs = {"echo": settings.DEBUG, "connect_args": {"check_same_thread": False}}
     engine = create_engine(db_url, **engine_kwargs)
 
