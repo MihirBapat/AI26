@@ -15,13 +15,19 @@ settings = get_settings()
 async def lifespan(app: FastAPI):
     """Application lifecycle — startup / shutdown hooks."""
     from app.db.base import Base
-    from app.db.session import engine
-    import app.models  # Ensures all models (User, Course, Lookups) are registered
+    from app.db.session import engine, SessionLocal
+    import app.models  # Ensures all models (User, Course, Lookups, Employer, Skill) are registered
+    from app.services.skill_service import skill_service
 
     try:
         Base.metadata.create_all(bind=engine)
-    except Exception:
-        pass
+        db = SessionLocal()
+        try:
+            skill_service.seed_foundational_skills(db)
+        finally:
+            db.close()
+    except Exception as e:
+        print(f"[WARN] Startup initialization exception: {e}")
 
     from pathlib import Path
     import os

@@ -14,6 +14,10 @@ from app.models.course import (
     CourseSkillSet,
     CourseTag,
 )
+from app.models.employer import Employer
+from app.models.employer_validation import EmployerCourseValidation, EmployerFeedback
+from app.models.ingestion import IngestionRun
+from app.models.job_posting import JobPosting, JobPostingSkill
 from app.models.lookups import (
     Domain,
     Initiative,
@@ -27,7 +31,7 @@ from app.models.lookups import (
     SkillSet,
     Tag,
 )
-
+from app.models.skill import CourseSkill, Skill, SkillAlias
 from app.models.user import User
 from app.models.candidate import CandidateProfile
 __all__ = [
@@ -47,9 +51,7 @@ __all__ = [
     "Initiative",
     "ProductType",
     "SkillSet",
-
     "Course",
-
     "CourseSector",
     "CourseDomain",
     "CourseOccupation",
@@ -60,5 +62,13 @@ __all__ = [
     "CourseInitiative",
     "CourseProductType",
     "CourseSkillSet",
+    "Employer",
+    "Skill",
+    "SkillAlias",
+    "CourseSkill",
+    "JobPosting",
+    "JobPostingSkill",
+    "EmployerCourseValidation",
+    "EmployerFeedback",
+    "IngestionRun",
 ]
-
