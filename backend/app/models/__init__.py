@@ -29,10 +29,11 @@ from app.models.lookups import (
 )
 
 from app.models.user import User
-
+from app.models.candidate import CandidateProfile
 __all__ = [
     "TimestampMixin",
     "User",
+    "CandidateProfile",
 
     "Sector",
     "Domain",
