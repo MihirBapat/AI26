@@ -22,7 +22,12 @@ export function ProtectedRoute({ children, allowedRole }: ProtectedRouteProps) {
   }
 
   if (!isAuthenticated || !user) {
-    const redirectPath = allowedRole === 'gov' ? '/gov/login' : '/login'
+    let redirectPath = '/login'
+    if (allowedRole === 'gov' || (Array.isArray(allowedRole) && allowedRole.includes('gov'))) {
+      redirectPath = '/gov/login'
+    } else if (allowedRole === 'candidate' || (Array.isArray(allowedRole) && allowedRole.includes('candidate'))) {
+      redirectPath = '/std/login'
+    }
     return <Navigate to={redirectPath} replace />
   }
 

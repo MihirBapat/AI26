@@ -24,10 +24,10 @@ const ROLES = [
     href: '/login',
   },
   {
-    title: 'Candidate',
-    description: 'Find your career path by identifying skill gaps and recommended courses.',
+    title: 'Candidate / Student',
+    description: 'Find your career path by identifying skill gaps, exploring courses, and viewing district jobs.',
     icon: User,
-    href: '/login',
+    href: '/std/login',
   },
 ]
 
@@ -40,6 +40,8 @@ export function Home() {
     if (isAuthenticated && user) {
       if (user.role === 'gov') {
         navigate('/gov/dashboard', { replace: true })
+      } else if (user.role === 'candidate') {
+        navigate('/std/dashboard', { replace: true })
       }
     }
   }, [isAuthenticated, user, navigate])
