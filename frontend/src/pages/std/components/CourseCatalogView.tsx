@@ -48,22 +48,36 @@ interface Sector {
   name: string
 }
 
-export function CourseCatalogView() {
+interface CourseCatalogViewProps {
+  initialSectorId?: string
+  initialSearch?: string
+  onBack?: () => void
+}
+
+export function CourseCatalogView({ initialSectorId, initialSearch, onBack }: CourseCatalogViewProps = {}) {
   const [courses, setCourses] = useState<CourseItem[]>([])
   const [totalCourses, setTotalCourses] = useState<number>(0)
   const [page, setPage] = useState<number>(1)
   const [pageSize] = useState<number>(12)
-  const [search, setSearch] = useState<string>('')
-  const [debouncedSearch, setDebouncedSearch] = useState<string>('')
+  const [search, setSearch] = useState<string>(initialSearch || '')
+  const [debouncedSearch, setDebouncedSearch] = useState<string>(initialSearch || '')
 
   const [sectors, setSectors] = useState<Sector[]>([])
-  const [selectedSectorId, setSelectedSectorId] = useState<string>('all')
+  const [selectedSectorId, setSelectedSectorId] = useState<string>(initialSectorId || 'all')
   const [courseType, setCourseType] = useState<string>('all')
   const [freeOnly, setFreeOnly] = useState<boolean>(false)
   const [hasCertificate, setHasCertificate] = useState<boolean>(false)
 
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [selectedCourseDetail, setSelectedCourseDetail] = useState<CourseDetail | null>(null)
+
+  // Sync initialSectorId when prop changes
+  useEffect(() => {
+    if (initialSectorId) {
+      setSelectedSectorId(initialSectorId)
+      setPage(1)
+    }
+  }, [initialSectorId])
 
   // Debounce search input
   useEffect(() => {
@@ -139,6 +153,21 @@ export function CourseCatalogView() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
+      {/* Back Button if routed from Dashboard */}
+      {onBack && (
+        <div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onBack}
+            className="gap-2 text-xs font-semibold hover:bg-muted shadow-xs"
+          >
+            <ChevronLeft className="size-4" />
+            <span>Back to Dashboard</span>
+          </Button>
+        </div>
+      )}
+
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>

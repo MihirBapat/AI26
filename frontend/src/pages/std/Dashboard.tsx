@@ -3,12 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   LogOut,
   GraduationCap,
-  Sparkles,
   MapPin,
-  Target,
-  BookOpen,
-  Languages,
-  Briefcase,
   Loader2,
   CheckCircle2,
   PhoneCall,
@@ -26,6 +21,9 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ConsultationPage } from './components/ConsultationPage'
 import { ProfileForm } from './components/ProfileForm'
+import { StudentHomeView } from './components/StudentHomeView'
+import { CourseCatalogView } from './components/CourseCatalogView'
+import { JobMarketView } from './components/JobMarketView'
 
 import {
   Sidebar,
@@ -59,7 +57,7 @@ interface CandidateProfileData {
   preferred_language: string
 }
 
-type SectionId = 'home' | 'consultation' | 'profile'
+type SectionId = 'home' | 'jobs' | 'courses' | 'consultation' | 'profile'
 
 const GOAL_LABELS: Record<string, string> = {
   further_education: 'Further Education & Studies',
@@ -72,131 +70,6 @@ const LANGUAGE_LABELS: Record<string, string> = {
   mr: 'Marathi (मराठी)',
   hi: 'Hindi (हिंदी)',
   en: 'English',
-}
-
-// ─── Dashboard Home ────────────────────────────────────────────────────────────
-function DashboardHome({
-  profile,
-  onNavigate,
-}: {
-  profile: CandidateProfileData
-  onNavigate: (id: SectionId) => void
-}) {
-  return (
-    <div className="space-y-5">
-      {/* Welcome banner */}
-      <div className="rounded-2xl bg-gradient-to-br from-primary/10 via-card to-blue-500/5 border border-primary/20 p-6 shadow-sm">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
-          <div className="flex items-center gap-4">
-            <div className="size-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold text-2xl border border-primary/20 shrink-0">
-              {profile.full_name?.charAt(0)?.toUpperCase() || 'C'}
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-xl sm:text-2xl font-bold text-foreground">
-                  Welcome, {profile.full_name?.split(' ')[0] || 'Candidate'}!
-                </h1>
-                <Badge className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20 text-xs">
-                  <CheckCircle2 className="size-3 mr-1" />
-                  Profile Active
-                </Badge>
-              </div>
-              <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <MapPin className="size-3.5 text-primary" />
-                  {profile.district}, Maharashtra
-                </span>
-                <span className="flex items-center gap-1">
-                  <Languages className="size-3.5" />
-                  {LANGUAGE_LABELS[profile.preferred_language] || profile.preferred_language}
-                </span>
-                {profile.age && <span>Age: {profile.age} yrs</span>}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Stat cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-border shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold flex items-center gap-2 text-muted-foreground uppercase tracking-wider">
-              <Target className="size-4 text-primary" />
-              Selected Goal
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm font-semibold text-foreground">
-              {GOAL_LABELS[profile.primary_goal] || profile.primary_goal}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Matched against {profile.district} opportunities
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold flex items-center gap-2 text-muted-foreground uppercase tracking-wider">
-              <BookOpen className="size-4 text-primary" />
-              Education Level
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm font-semibold text-foreground">
-              {profile.current_education_level || 'Not Specified'}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Filters eligible Skill India Digital courses
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold flex items-center gap-2 text-muted-foreground uppercase tracking-wider">
-              <Briefcase className="size-4 text-primary" />
-              Field of Interest
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm font-semibold text-foreground">
-              {profile.field_of_interest || 'General / Open'}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {profile.current_skills ? `Skills: ${profile.current_skills}` : 'No prior skills specified'}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* CTA card */}
-      <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-background shadow-sm">
-        <CardContent className="py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="size-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow">
-              <Sparkles className="size-6" />
-            </div>
-            <div>
-              <p className="font-semibold text-foreground">Ready to explore your options?</p>
-              <p className="text-sm text-muted-foreground">
-                Start an AI voice consultation in Marathi, Hindi, or English
-              </p>
-            </div>
-          </div>
-          <Button
-            size="lg"
-            className="gap-2 shrink-0 shadow-lg shadow-primary/20"
-            onClick={() => onNavigate('consultation')}
-          >
-            <PhoneCall className="size-4" />
-            Start Consultation
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
-  )
 }
 
 // ─── Profile Overview View ──────────────────────────────────────────────────
@@ -323,8 +196,13 @@ export function StdDashboard() {
   const [activeSection, setActiveSection] = useState<SectionId>('home')
   const [isEditingProfile, setIsEditingProfile] = useState(false)
 
+  const [sectors, setSectors] = useState<{ id: number; name: string }[]>([])
+
   useEffect(() => {
     checkProfileAndLoad()
+    apiFetch<{ id: number; name: string }[]>('/lookups/sectors')
+      .then(setSectors)
+      .catch(() => {})
   }, [])
 
   const checkProfileAndLoad = async () => {
@@ -370,14 +248,27 @@ export function StdDashboard() {
 
   if (!profile) return null
 
+  // Resolve matching DB sector ID for student's field of interest
+  const matchedSector = sectors.find(s => {
+    if (!profile.field_of_interest || profile.field_of_interest === 'General / Open') return false
+    const fLower = profile.field_of_interest.toLowerCase()
+    const sLower = s.name.toLowerCase()
+    return sLower === fLower || sLower.includes(fLower) || fLower.includes(sLower)
+  })
+  const matchedSectorId = matchedSector ? matchedSector.id.toString() : 'all'
+
   const sectionTitle =
     activeSection === 'home'
       ? 'Dashboard'
-      : activeSection === 'consultation'
-        ? 'AI Consultation'
-        : isEditingProfile
-          ? 'Update Profile'
-          : 'My Profile'
+      : activeSection === 'jobs'
+        ? 'Job Market'
+        : activeSection === 'courses'
+          ? 'Course Catalog'
+          : activeSection === 'consultation'
+            ? 'AI Consultation'
+            : isEditingProfile
+              ? 'Update Profile'
+              : 'My Profile'
 
   return (
     <SidebarProvider>
@@ -467,12 +358,26 @@ export function StdDashboard() {
         <main className="flex-1 overflow-auto p-4 md:p-6 bg-muted/20 flex flex-col">
           <div className="max-w-5xl mx-auto w-full flex-1 flex flex-col justify-center">
             {activeSection === 'home' && (
-              <DashboardHome
+              <StudentHomeView
                 profile={profile}
                 onNavigate={(sec) => {
                   setActiveSection(sec)
                   setIsEditingProfile(false)
                 }}
+              />
+            )}
+            {activeSection === 'jobs' && (
+              <JobMarketView
+                initialDistrict={profile.district || 'Pune'}
+                initialKeyword={profile.field_of_interest || profile.current_skills || ''}
+                onBack={() => setActiveSection('home')}
+              />
+            )}
+            {activeSection === 'courses' && (
+              <CourseCatalogView
+                initialSectorId={matchedSectorId}
+                initialSearch={''}
+                onBack={() => setActiveSection('home')}
               />
             )}
             {activeSection === 'consultation' && <ConsultationPage />}

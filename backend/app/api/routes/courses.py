@@ -21,10 +21,12 @@ from app.models.course import (
 from app.models.lookups import Provider, Sector
 from app.schemas.course import (
     CourseDetail,
+    CourseHealthReportResponse,
     CourseListItem,
     CourseStats,
     PaginatedCourses,
 )
+from app.services.course_health_service import course_health_service
 
 router = APIRouter(prefix="/courses", tags=["courses"])
 
@@ -191,3 +193,16 @@ def get_course_by_sid(sid_course_id: str, db: Session = Depends(get_db)):
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
     return CourseDetail.from_course(course)
+
+
+@router.get("/{course_id}/health-report", response_model=CourseHealthReportResponse)
+async def get_course_health_report(
+    course_id: int,
+    district: str | None = Query(None, description="Optional district filter (e.g. 'Pune', 'Mumbai', 'Nashik', 'All Maharashtra')"),
+    db: Session = Depends(get_db),
+):
+    """Generate a comprehensive Course Health, Modernity & Industry Alignment Intelligence Report."""
+    report = await course_health_service.generate_health_report(db, course_id, district=district)
+    if not report:
+        raise HTTPException(status_code=404, detail="Course not found")
+    return report

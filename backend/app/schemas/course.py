@@ -217,3 +217,94 @@ class CourseStats(BaseModel):
     unique_sectors: int
     avg_rating: float | None = None
     with_certificate: int
+
+
+# ---------------------------------------------------------------------------
+# Course Health & Industry Alignment Intelligence Report Schemas
+# ---------------------------------------------------------------------------
+
+class SalaryBenchmarkBand(BaseModel):
+    label: str
+    min_salary: float
+    max_salary: float | None = None
+    count: int
+
+
+class TopEmployerItem(BaseModel):
+    name: str
+    active_openings: int
+    location: str | None = "Maharashtra"
+    average_salary: float | None = None
+
+
+class SkillMatchGapItem(BaseModel):
+    skill_name: str
+    status: str = Field(..., description="'taught', 'emerging_gap', or 'declining'")
+    importance_weight: float = 1.0
+    demand_growth_pct: float | None = None
+    category: str = "Technical"
+
+
+class CurriculumRecommendation(BaseModel):
+    id: str
+    category: str = Field(..., description="'add_module', 'update_tooling', 'capacity_adjustment', 'trainer_enablement'")
+    title: str
+    description: str
+    priority: str = Field(..., description="'High', 'Medium', 'Low'")
+    expected_impact: str
+
+
+class DistrictDemandBreakdown(BaseModel):
+    district: str
+    openings_count: int
+    demand_intensity: str = "Moderate"
+    avg_salary: float | None = None
+
+
+class CourseHealthReportResponse(BaseModel):
+    """Comprehensive Course Health & Industry Alignment Report (SIH PS 26134)."""
+
+    course_id: int
+    sid_course_id: str
+    title: str
+    provider_name: str | None = None
+    course_type: str = "Online"
+    duration_minutes: int | None = None
+    nsqf_level: str | None = None
+    enrollment_count: int = 0
+    rating_average: float | None = None
+    certificate_enabled: bool = True
+    course_url: str | None = None
+
+    sectors: list[str] = Field(default_factory=list)
+    domains: list[str] = Field(default_factory=list)
+    occupations: list[str] = Field(default_factory=list)
+
+    # Core Health Scores (0 to 100)
+    overall_health_score: float = 85.0
+    health_grade: str = "Grade A · Highly Aligned"
+    health_status_label: str = "Optimal Alignment"
+    industry_demand_score: float = 88.0
+    curriculum_modernity_score: float = 82.0
+    obsolescence_risk_score: float = 14.0
+    placement_potential_score: float = 89.0
+    skill_velocity: str = "High Demand Velocity (+28% YoY)"
+
+    # Live Market Indicators
+    total_state_openings: int = 1200
+    avg_salary_inr: float = 650000.0
+    entry_salary_inr: float = 380000.0
+    senior_salary_inr: float = 1100000.0
+
+    salary_bands: list[SalaryBenchmarkBand] = Field(default_factory=list)
+    top_employers: list[TopEmployerItem] = Field(default_factory=list)
+    skills_analysis: list[SkillMatchGapItem] = Field(default_factory=list)
+    recommendations: list[CurriculumRecommendation] = Field(default_factory=list)
+    district_demand: list[DistrictDemandBreakdown] = Field(default_factory=list)
+
+    selected_district: str = "All Maharashtra"
+    district_scope_label: str = "All Maharashtra (Statewide)"
+    ai_executive_summary: str = ""
+    evidence_basis: str = "Live Adzuna Maharashtra vacancies & Skill India Digital curriculum mapping"
+    generated_at: str = ""
+

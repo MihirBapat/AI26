@@ -36,13 +36,43 @@ interface TopCompany {
 }
 
 interface JobMarketViewProps {
-  selectedDistrict: string
+  selectedDistrict?: string
+  initialDistrict?: string
+  initialKeyword?: string
+  onBack?: () => void
 }
 
-export function JobMarketView({ selectedDistrict }: JobMarketViewProps) {
-  const [keyword, setKeyword] = useState<string>('Technician')
-  const [debouncedKeyword, setDebouncedKeyword] = useState<string>('Technician')
-  const [district, setDistrict] = useState<string>(selectedDistrict)
+function resolveJobSearchTerm(term?: string): string {
+  if (!term || term === 'General / Open') return 'Developer'
+  const s = term.toLowerCase()
+  if (s.includes('it') || s.includes('software') || s.includes('computer') || s.includes('sde') || s.includes('code')) {
+    return 'Software Developer'
+  }
+  if (s.includes('auto') || s.includes('vehicle') || s.includes('motor') || s.includes('ev')) {
+    return 'EV Technician'
+  }
+  if (s.includes('electronic') || s.includes('embedded')) {
+    return 'Electronics Engineer'
+  }
+  if (s.includes('health') || s.includes('medical') || s.includes('nurse')) {
+    return 'Healthcare Assistant'
+  }
+  if (s.includes('green') || s.includes('solar') || s.includes('energy')) {
+    return 'Solar Technician'
+  }
+  if (s.includes('agri') || s.includes('farm')) {
+    return 'Agriculture Technician'
+  }
+  return term
+}
+
+export function JobMarketView({ selectedDistrict, initialDistrict, initialKeyword, onBack }: JobMarketViewProps = {}) {
+  const defaultDistrict = selectedDistrict || initialDistrict || 'Pune'
+  const defaultKeyword = resolveJobSearchTerm(initialKeyword)
+
+  const [keyword, setKeyword] = useState<string>(defaultKeyword)
+  const [debouncedKeyword, setDebouncedKeyword] = useState<string>(defaultKeyword)
+  const [district, setDistrict] = useState<string>(defaultDistrict)
   const [page, setPage] = useState<number>(1)
 
   const [jobs, setJobs] = useState<JobItem[]>([])
@@ -54,8 +84,20 @@ export function JobMarketView({ selectedDistrict }: JobMarketViewProps) {
 
   // Sync selectedDistrict prop
   useEffect(() => {
-    setDistrict(selectedDistrict)
+    if (selectedDistrict) {
+      setDistrict(selectedDistrict)
+    }
   }, [selectedDistrict])
+
+  // Sync initialKeyword prop
+  useEffect(() => {
+    if (initialKeyword) {
+      const resolved = resolveJobSearchTerm(initialKeyword)
+      setKeyword(resolved)
+      setDebouncedKeyword(resolved)
+      setPage(1)
+    }
+  }, [initialKeyword])
 
   // Debounce keyword
   useEffect(() => {
@@ -66,17 +108,33 @@ export function JobMarketView({ selectedDistrict }: JobMarketViewProps) {
     return () => clearTimeout(handler)
   }, [keyword])
 
-  // Fetch Jobs
+  // Fetch Jobs & District Demand Metrics
   useEffect(() => {
     const fetchJobs = async () => {
       setIsLoading(true)
       try {
         const whereParam = district === 'All Maharashtra' ? 'Maharashtra' : district
-        const res = await apiFetch<{ results: JobItem[]; count: number }>(
-          `/jobs/search?what=${encodeURIComponent(debouncedKeyword || '')}&where=${encodeURIComponent(whereParam)}&page=${page}&results_per_page=9`
-        )
+        
+        // 1. Fetch Adzuna live search
+        const [res, demandRes] = await Promise.all([
+          apiFetch<{ results: JobItem[]; total_count?: number; count?: number }>(
+            `/jobs/search?what=${encodeURIComponent(debouncedKeyword || '')}&where=${encodeURIComponent(whereParam)}&page=${page}&results_per_page=9`
+          ).catch(() => ({ results: [], total_count: 0, count: 0 })),
+          apiFetch<{ total_vacancies?: number; top_employers?: { canonical_name: string; count: number }[] }>(
+            `/jobs/districts/demand?district=${encodeURIComponent(whereParam)}`
+          ).catch(() => null)
+        ])
+
+        const rawTotal = res.total_count ?? res.count ?? 0
+        const activeTotal = rawTotal > 0 ? rawTotal : (demandRes?.total_vacancies && demandRes.total_vacancies > 0 ? demandRes.total_vacancies : (res.results?.length ?? 0))
+
         setJobs(res.results || [])
-        setTotalJobs(res.count || 0)
+        setTotalJobs(activeTotal)
+
+        // If top-companies API is empty later, we have demand employers
+        if (demandRes?.top_employers && demandRes.top_employers.length > 0) {
+          setTopCompanies(demandRes.top_employers.map(e => ({ company: e.canonical_name, job_count: e.count })))
+        }
       } catch (err) {
         console.error('Failed to load jobs', err)
         setJobs([])
@@ -88,7 +146,7 @@ export function JobMarketView({ selectedDistrict }: JobMarketViewProps) {
     fetchJobs()
   }, [debouncedKeyword, district, page])
 
-  // Fetch Top Companies leaderboard
+  // Fetch Top Companies leaderboard (specific to keyword if available)
   useEffect(() => {
     const fetchCompanies = async () => {
       setLoadingCompanies(true)
@@ -96,10 +154,13 @@ export function JobMarketView({ selectedDistrict }: JobMarketViewProps) {
         const whereParam = district === 'All Maharashtra' ? 'Maharashtra' : district
         const res = await apiFetch<{ companies: TopCompany[] }>(
           `/jobs/top-companies?what=${encodeURIComponent(debouncedKeyword || '')}&where=${encodeURIComponent(whereParam)}`
-        )
-        setTopCompanies(res.companies || [])
+        ).catch(() => null)
+
+        if (res?.companies && res.companies.length > 0) {
+          setTopCompanies(res.companies)
+        }
       } catch {
-        setTopCompanies([])
+        // Fallback handled by demand API
       } finally {
         setLoadingCompanies(false)
       }
@@ -112,6 +173,21 @@ export function JobMarketView({ selectedDistrict }: JobMarketViewProps) {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
+      {/* Back Button if routed from Dashboard */}
+      {onBack && (
+        <div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onBack}
+            className="gap-2 text-xs font-semibold hover:bg-muted shadow-xs"
+          >
+            <ChevronLeft className="size-4" />
+            <span>Back to Dashboard</span>
+          </Button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>

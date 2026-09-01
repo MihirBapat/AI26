@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogOut, ShieldCheck, BarChart3, BookOpen } from 'lucide-react'
+import { LogOut, ShieldCheck, BarChart3, BookOpen, FileText } from 'lucide-react'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { useAuth } from '@/context/AuthContext'
 import { CourseView } from './components/CourseView'
 import { AnalysisView } from './components/AnalysisView'
+import { GenerateReportsView } from './components/GenerateReportsView'
 import { apiFetch } from '@/lib/api'
 
 import {
@@ -41,7 +42,7 @@ export function GovDashboard() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
   
-  const [activeTab, setActiveTab] = useState<'analysis' | 'course'>('analysis')
+  const [activeTab, setActiveTab] = useState<'analysis' | 'course' | 'reports'>('analysis')
   const [selectedDistrict, setSelectedDistrict] = useState<string>('All Maharashtra')
   
   const [sectors, setSectors] = useState<Sector[]>([])
@@ -98,6 +99,16 @@ export function GovDashboard() {
                     <span>Courses</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton 
+                    isActive={activeTab === 'reports'}
+                    onClick={() => setActiveTab('reports')}
+                    tooltip="Generate Reports"
+                  >
+                    <FileText />
+                    <span>Generate Reports</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -120,38 +131,42 @@ export function GovDashboard() {
         <header className="flex min-h-16 shrink-0 flex-col sm:flex-row items-start sm:items-center gap-4 border-b px-4 py-3 bg-background">
           <div className="flex items-center w-full sm:w-auto">
             <h1 className="text-lg font-semibold whitespace-nowrap">
-              {activeTab === 'analysis' ? 'Labor Market Intelligence' : 'Skill Development Courses'}
+              {activeTab === 'analysis'
+                ? 'Labor Market Intelligence'
+                : activeTab === 'course'
+                ? 'Skill Development Courses'
+                : 'Curriculum Gap & Intelligence Reports'}
             </h1>
           </div>
           
           <div className="flex-1 flex flex-wrap items-center justify-start sm:justify-end gap-3 w-full sm:w-auto">
             {activeTab === 'analysis' && (
-              <>
-                <Select value={selectedSectorId} onValueChange={(val) => { if (val) setSelectedSectorId(val); }}>
-                  <SelectTrigger className="w-[180px] h-8 text-xs">
-                    <SelectValue placeholder="All Sectors">
-                      {selectedSectorId === 'all' ? 'All Sectors' : sectors.find(s => s.id.toString() === selectedSectorId)?.name || 'All Sectors'}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all" className="text-xs font-semibold">All Sectors</SelectItem>
-                    {sectors.map(s => (
-                      <SelectItem key={s.id} value={s.id.toString()} className="text-xs">{s.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <Select value={selectedSectorId} onValueChange={(val) => { if (val) setSelectedSectorId(val); }}>
+                <SelectTrigger className="w-[180px] h-8 text-xs">
+                  <SelectValue placeholder="All Sectors">
+                    {selectedSectorId === 'all' ? 'All Sectors' : sectors.find(s => s.id.toString() === selectedSectorId)?.name || 'All Sectors'}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all" className="text-xs font-semibold">All Sectors</SelectItem>
+                  {sectors.map(s => (
+                    <SelectItem key={s.id} value={s.id.toString()} className="text-xs">{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
 
-                <Select value={selectedDistrict} onValueChange={(val) => { if (val) setSelectedDistrict(val); }}>
-                  <SelectTrigger className="w-[160px] h-8 text-xs">
-                    <SelectValue placeholder="Select District" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ALL_MAHARASHTRA_DISTRICTS.map(d => (
-                      <SelectItem key={d} value={d} className="text-xs">{d}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </>
+            {activeTab !== 'reports' && (
+              <Select value={selectedDistrict} onValueChange={(val) => { if (val) setSelectedDistrict(val); }}>
+                <SelectTrigger className="w-[170px] h-8 text-xs bg-background">
+                  <SelectValue placeholder="Select District" />
+                </SelectTrigger>
+                <SelectContent className="max-h-64">
+                  {ALL_MAHARASHTRA_DISTRICTS.map(d => (
+                    <SelectItem key={d} value={d} className="text-xs">{d}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
 
             <div className="flex items-center gap-2 ml-auto sm:ml-0">
@@ -175,8 +190,10 @@ export function GovDashboard() {
                 district={selectedDistrict} 
                 sector={selectedSectorName} 
               />
+            ) : activeTab === 'course' ? (
+              <CourseView district={selectedDistrict} />
             ) : (
-              <CourseView />
+              <GenerateReportsView />
             )}
           </div>
         </main>

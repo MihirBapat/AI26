@@ -260,23 +260,37 @@ export function AnalysisView({ district, sector }: AnalysisViewProps) {
 
     return (
       <div className="space-y-6 animate-in fade-in duration-500">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Open Positions</CardTitle>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Card className="shadow-sm border-border bg-card">
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+              <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Active Openings</CardTitle>
+              <Briefcase className="size-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-primary">{totalOpenPositions.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground mt-1">Aggregated across all 36 Maharashtra districts</p>
+              <div className="text-2xl sm:text-3xl font-extrabold text-primary">{totalOpenPositions.toLocaleString()}</div>
+              <p className="text-xs text-muted-foreground mt-1">Across all 36 Maharashtra districts</p>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Highest Demand District</CardTitle>
+
+          <Card className="shadow-sm border-border bg-card">
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+              <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Top Employment Hub</CardTitle>
+              <TrendingUp className="size-4 text-emerald-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-foreground">{heatmapData.highest_demand_district || 'N/A'}</div>
-              <p className="text-xs text-muted-foreground mt-1">Lead regional employment hub</p>
+              <div className="text-2xl sm:text-3xl font-extrabold text-foreground">{heatmapData.highest_demand_district || 'Pune'}</div>
+              <p className="text-xs text-muted-foreground mt-1">Lead regional hiring center</p>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm border-border bg-card">
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+              <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Statewide Benchmark Salary</CardTitle>
+              <span className="text-primary font-bold text-sm">₹</span>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl sm:text-3xl font-extrabold text-foreground">₹5.8L</div>
+              <p className="text-xs text-muted-foreground mt-1">Annual average market package</p>
             </CardContent>
           </Card>
         </div>

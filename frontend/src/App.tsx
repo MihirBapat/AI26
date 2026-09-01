@@ -5,6 +5,7 @@ import { Register } from './pages/auth/Register'
 import { GovLogin } from './pages/auth/gov/GovLogin'
 import { GovRegister } from './pages/auth/gov/GovRegister'
 import { GovDashboard } from './pages/gov/Dashboard'
+import { CourseHealthReport } from './pages/gov/CourseHealthReport'
 import { StdLogin } from './pages/auth/std/StdLogin'
 import { StdRegister } from './pages/auth/std/StdRegister'
 import { StdDashboard } from './pages/std/Dashboard'
@@ -32,6 +33,14 @@ function App() {
                 element={
                   <ProtectedRoute allowedRole="gov">
                     <GovDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/gov/course/:id"
+                element={
+                  <ProtectedRoute allowedRole="gov">
+                    <CourseHealthReport />
                   </ProtectedRoute>
                 }
               />

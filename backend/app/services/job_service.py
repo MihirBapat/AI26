@@ -390,8 +390,11 @@ class JobService:
         # Find matching district preset for sector context
         matched_dist = next((d for d in MAHARASHTRA_DISTRICTS if d["name"].lower() == district.lower()), None)
         
-        # Only if live API failed/is unconfigured, use fallback simulation
-        if search_res.is_fallback and matched_dist:
+        # If live Adzuna returned 0 or valid count, strictly respect search_res.total_count
+        if not search_res.is_fallback:
+            total_vacancies = search_res.total_count
+        elif matched_dist:
+            # Only if live API failed/is unconfigured, use baseline simulation
             base_vacancies = 48500
             weight = matched_dist["weight"]
             v_count = int(base_vacancies * (weight / 36.0) * 1.8)
@@ -399,11 +402,9 @@ class JobService:
             filter_text = target_what or target_sector or ''
             if filter_text:
                 matching_sector = any(filter_text.lower() in s.lower() for s in matched_dist["top_sectors"])
-                v_count = int(v_count * (0.8 if matching_sector else 0.2))
-                jitter = (len(filter_text) * 43) % 200
-                v_count += jitter
+                v_count = int(v_count * 0.8) if matching_sector else 0
             total_vacancies = v_count
-            demand_score = min(100.0, max(15.0, (matched_dist["weight"] / 1.6) * 100.0 * (1.0 if not filter_text else (0.85 if matching_sector else 0.6))))
+            demand_score = min(100.0, max(15.0, (matched_dist["weight"] / 1.6) * 100.0 * (1.0 if not filter_text else (0.85 if matching_sector else 0.2))))
             
         demand_lvl = "High" if demand_score >= 75 else ("Moderate" if demand_score >= 50 else "Emerging")
         top_sectors = matched_dist["top_sectors"] if matched_dist else ["Manufacturing", "Services", "Engineering"]
