@@ -40,6 +40,10 @@ export function Register() {
       const user = await register(fullName, email, password, role)
       if (user.role === 'gov') {
         navigate('/gov/dashboard', { replace: true })
+      } else if (user.role === 'employer') {
+        navigate('/employer/dashboard', { replace: true })
+      } else if (user.role === 'candidate') {
+        navigate('/std/dashboard', { replace: true })
       } else {
         navigate('/', { replace: true })
       }

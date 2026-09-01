@@ -25,6 +25,10 @@ export function Login() {
       const user = await login(email, password)
       if (user.role === 'gov') {
         navigate('/gov/dashboard', { replace: true })
+      } else if (user.role === 'employer') {
+        navigate('/employer/dashboard', { replace: true })
+      } else if (user.role === 'candidate') {
+        navigate('/std/dashboard', { replace: true })
       } else {
         navigate('/', { replace: true })
       }
@@ -92,6 +96,20 @@ export function Login() {
                 'Sign In'
               )}
             </Button>
+            
+            <div className="w-full pt-1 border-t border-border/60 text-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('employer@skillbridge.gov.in')
+                  setPassword('Employer@123')
+                }}
+                className="text-xs text-primary/80 hover:text-primary underline cursor-pointer"
+              >
+                Fill Employer Partner Demo Credentials
+              </button>
+            </div>
+
             <div className="text-sm text-center text-muted-foreground">
               Don't have an account?{' '}
               <Link to="/register" className="text-primary hover:underline font-medium">
