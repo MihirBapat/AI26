@@ -51,7 +51,8 @@ interface HeatmapDistrictPoint {
 
 interface HeatmapResponse {
   state: string
-  total_vacancies: number
+  total_state_vacancies?: number
+  total_vacancies?: number
   districts: HeatmapDistrictPoint[]
   highest_demand_district: string
 }
@@ -244,13 +245,18 @@ export function AnalysisView({ district, sector }: AnalysisViewProps) {
     return '#93c5fd' // soft blue
   }
 
-  const maxVacancies = Math.max(...heatmapData.districts.map(d => d.total_vacancies), 1)
+  const districtsList = heatmapData.districts || []
+  const maxVacancies = Math.max(...districtsList.map(d => d.total_vacancies || 0), 1)
+  const totalOpenPositions =
+    heatmapData.total_state_vacancies ??
+    heatmapData.total_vacancies ??
+    districtsList.reduce((acc, d) => acc + (d.total_vacancies || 0), 0)
 
   // ==========================================
   // STATEWIDE VIEW
   // ==========================================
   if (district === 'All Maharashtra') {
-    const chartData = [...heatmapData.districts].sort((a, b) => b.demand_score - a.demand_score).slice(0, 15)
+    const chartData = [...districtsList].sort((a, b) => b.demand_score - a.demand_score).slice(0, 15)
 
     return (
       <div className="space-y-6 animate-in fade-in duration-500">
@@ -260,7 +266,7 @@ export function AnalysisView({ district, sector }: AnalysisViewProps) {
               <CardTitle className="text-sm font-medium text-muted-foreground">Total Open Positions</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-primary">{heatmapData.total_vacancies.toLocaleString()}</div>
+              <div className="text-3xl font-bold text-primary">{totalOpenPositions.toLocaleString()}</div>
               <p className="text-xs text-muted-foreground mt-1">Aggregated across all 36 Maharashtra districts</p>
             </CardContent>
           </Card>
@@ -269,7 +275,7 @@ export function AnalysisView({ district, sector }: AnalysisViewProps) {
               <CardTitle className="text-sm font-medium text-muted-foreground">Highest Demand District</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-foreground">{heatmapData.highest_demand_district}</div>
+              <div className="text-3xl font-bold text-foreground">{heatmapData.highest_demand_district || 'N/A'}</div>
               <p className="text-xs text-muted-foreground mt-1">Lead regional employment hub</p>
             </CardContent>
           </Card>
@@ -293,9 +299,9 @@ export function AnalysisView({ district, sector }: AnalysisViewProps) {
                 className="w-full h-full"
               >
                 <MapControls position="bottom-right" showZoom />
-                {heatmapData.districts.map(d => {
-                  const color = getDemandColorHex(d.demand_score)
-                  const size = Math.max(16, Math.min(48, (d.total_vacancies / maxVacancies) * 48))
+                {districtsList.map(d => {
+                  const color = getDemandColorHex(d.demand_score ?? 0)
+                  const size = Math.max(16, Math.min(48, ((d.total_vacancies || 0) / maxVacancies) * 48))
                   return (
                     <MapMarker key={d.district} longitude={d.longitude} latitude={d.latitude}>
                       <MarkerContent>
@@ -307,13 +313,13 @@ export function AnalysisView({ district, sector }: AnalysisViewProps) {
                             backgroundColor: color 
                           }}
                         >
-                           {size > 30 ? d.demand_score.toFixed(0) : ''}
+                           {size > 30 ? (d.demand_score ?? 0).toFixed(0) : ''}
                         </div>
                       </MarkerContent>
                       <MarkerTooltip className="bg-popover text-popover-foreground border shadow-lg px-3 py-2">
                         <div className="font-bold border-b pb-1 mb-1">{d.district}</div>
-                        <div className="text-xs">Demand Score: <span className="font-semibold" style={{color}}>{d.demand_score.toFixed(1)}</span></div>
-                        <div className="text-xs">Vacancies: <span className="font-semibold">{d.total_vacancies.toLocaleString()}</span></div>
+                        <div className="text-xs">Demand Score: <span className="font-semibold" style={{color}}>{(d.demand_score ?? 0).toFixed(1)}</span></div>
+                        <div className="text-xs">Vacancies: <span className="font-semibold">{(d.total_vacancies ?? 0).toLocaleString()}</span></div>
                       </MarkerTooltip>
                     </MapMarker>
                   )
@@ -406,7 +412,7 @@ export function AnalysisView({ district, sector }: AnalysisViewProps) {
             <Briefcase className="size-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{districtData ? districtData.total_vacancies.toLocaleString() : currentHeatmapPoint.total_vacancies.toLocaleString()}</div>
+            <div className="text-3xl font-bold">{(districtData?.total_vacancies ?? currentHeatmapPoint.total_vacancies ?? 0).toLocaleString()}</div>
             <p className="text-xs text-muted-foreground mt-1">Estimated open positions</p>
             {isSectorFiltered && <p className="text-xs font-semibold text-primary mt-1">In {sector}</p>}
           </CardContent>
@@ -418,7 +424,7 @@ export function AnalysisView({ district, sector }: AnalysisViewProps) {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {districtData && districtData.average_salary ? `₹${(districtData.average_salary / 100000).toFixed(2)}L` : (currentHeatmapPoint.average_salary ? `₹${(currentHeatmapPoint.average_salary / 100000).toFixed(2)}L` : 'N/A')}
+              {districtData?.average_salary ? `₹${(districtData.average_salary / 100000).toFixed(2)}L` : (currentHeatmapPoint.average_salary ? `₹${(currentHeatmapPoint.average_salary / 100000).toFixed(2)}L` : 'N/A')}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Per annum</p>
           </CardContent>
@@ -446,7 +452,7 @@ export function AnalysisView({ district, sector }: AnalysisViewProps) {
               <JobDensityHeatmapLayer 
                 centerLng={currentHeatmapPoint.longitude} 
                 centerLat={currentHeatmapPoint.latitude} 
-                totalVacancies={districtData ? districtData.total_vacancies : currentHeatmapPoint.total_vacancies} 
+                totalVacancies={districtData?.total_vacancies ?? currentHeatmapPoint.total_vacancies ?? 0} 
               />
               
             </Map>

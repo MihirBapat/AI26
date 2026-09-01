@@ -87,6 +87,13 @@ _LANG_CODE = {"mr": "mr-IN", "hi": "hi-IN", "en": "en-IN"}
 def build_instructions(profile: dict) -> str:
     goal_label = _GOAL_LABELS.get(profile["primary_goal"], profile["primary_goal"])
     relocation = "willing to consider nearby districts" if profile["willing_to_relocate"] else "prefers to stay in their home district"
+    lang = profile.get("preferred_language", "en")
+    lang_prompt = {
+        "mr": "CRITICAL: The candidate's preferred language is Marathi. You MUST respond and converse strictly in natural, conversational Marathi (मराठी).",
+        "hi": "CRITICAL: The candidate's preferred language is Hindi. You MUST respond and converse strictly in natural, conversational Hindi (हिंदी).",
+        "en": "Converse in English."
+    }.get(lang, "Converse in English.")
+
     return f"""You are a warm, knowledgeable career and education guidance assistant for the Maharashtra Skill Development platform.
 
 You are speaking with {profile['full_name']}, based in {profile['district']}, Maharashtra.
@@ -98,14 +105,18 @@ You are speaking with {profile['full_name']}, based in {profile['district']}, Ma
 - Field of interest: {profile['field_of_interest']}
 - Current skills: {profile['current_skills'] or 'none stated yet'}
 - Employment status: {profile['employment_status']}
-- Relocation preference: {relocation}
+## Language Instruction
+{lang_prompt}
+
+## Tool Calling Rules
+- CRITICAL: When calling any tool (`get_district_job_market`, `get_field_job_market`, `search_courses`, `get_courses_for_occupation`, `get_courses_by_sector`), you MUST ALWAYS pass all function arguments (district names, keywords, occupations, sectors) in standard English (e.g. use "Pune" instead of "पुणे", "Software Developer" instead of "सॉफ्टवेअर डेव्हलपर", "Electrician" instead of "इलेक्ट्रिशियन", "Paints" instead of "रंग").
+- Once you receive the tool response in English, translate the information and converse naturally with the user in their preferred language.
 
 ## Your behaviour
 - Speak in a friendly, encouraging tone. Use simple language.
 - If their goal is 'undecided', your first job is to help them figure out whether further education, a skill-development course, or direct job search fits them best — ask about their situation, never force a choice.
 - Ground every recommendation in real data for their district using the tools available. NEVER invent a course name, job count, or salary figure.
-- If a tool returns no data or marks data_source as unavailable, say so clearly rather than guessing.
-- After 2–3 turns of context-setting, proactively offer to search for courses or jobs in their district.
+- If a tool returns no data or marks data_source as unavailable, explain what other related options or entry-level paths exist.
 - Keep answers concise for voice — avoid bullet lists in speech; use natural sentences.
 """
 
@@ -117,11 +128,55 @@ import httpx
 
 _BACKEND_BASE = os.environ.get("BACKEND_URL", "http://127.0.0.1:8000/api/v1")
 
+DISTRICT_MAP = {
+    "पुणे": "Pune",
+    "मुंबई": "Mumbai",
+    "नागपूर": "Nagpur",
+    "नाशिक": "Nashik",
+    "छत्रपती संभाजीनगर": "Aurangabad",
+    "औरंगाबाद": "Aurangabad",
+    "ठाणे": "Thane",
+    "कोल्हापूर": "Kolhapur",
+    "सोलापूर": "Solapur",
+    "अमरावती": "Amravati",
+    "नांदेड": "Nanded",
+    "जळगाव": "Jalgaon",
+    "सातारा": "Satara",
+    "सांगली": "Sangli",
+    "अहमदनगर": "Ahmednagar",
+    "रत्नागिरी": "Ratnagiri",
+    "सिंधुदुर्ग": "Sindhudurg",
+    "धुळे": "Dhule",
+    "नंदुरबार": "Nandurbar",
+    "बीड": "Beed",
+    "जालना": "Jalna",
+    "लातूर": "Latur",
+    "उस्मानाबाद": "Osmanabad",
+    "धाराशिव": "Dharashiv",
+    "परभणी": "Parbhani",
+    "हिंगोली": "Hingoli",
+    "बुलढाणा": "Buldhana",
+    "अकोला": "Akola",
+    "वाशीम": "Washim",
+    "यवतमाळ": "Yavatmal",
+    "वर्धा": "Wardha",
+    "चंद्रपूर": "Chandrapur",
+    "गडचिरोली": "Gadchiroli",
+    "भंडारा": "Bhandara",
+    "गोंदिया": "Gondia",
+    "रायगड": "Raigad",
+    "पालघर": "Palghar",
+}
+
+def _clean_district(d: str) -> str:
+    return DISTRICT_MAP.get(d.strip(), d.strip())
+
 
 async def _api_get(path: str, params: dict | None = None) -> dict:
     """Internal helper to call the FastAPI backend from the agent."""
+    clean_params = {k: v for k, v in (params or {}).items() if v is not None}
     async with httpx.AsyncClient(timeout=10) as client:
-        r = await client.get(f"{_BACKEND_BASE}{path}", params=params)
+        r = await client.get(f"{_BACKEND_BASE}{path}", params=clean_params)
         r.raise_for_status()
         return r.json()
 
@@ -130,13 +185,14 @@ async def _api_get(path: str, params: dict | None = None) -> dict:
 async def get_district_job_market(district: str, sector: str | None = None) -> dict:
     """Get overall job demand for a Maharashtra district, optionally filtered by sector.
     Always relay the data_source field to the user."""
-    return await _api_get("/jobs/districts/demand", {"district": district, "sector": sector})
+    return await _api_get("/jobs/districts/demand", {"district": _clean_district(district), "sector": sector})
 
 
 @function_tool()
 async def get_field_job_market(occupation: str, district: str) -> dict:
     """Get job demand, salary trend and top employers for a specific occupation in a district."""
-    return await _api_get("/jobs/role-demand", {"role": occupation, "district": district})
+    return await _api_get("/jobs/role-demand", {"role": occupation, "district": _clean_district(district)})
+
 
 
 @function_tool()
@@ -161,7 +217,8 @@ async def get_skill_gap(occupation: str, district: str) -> dict:
 @function_tool()
 async def get_courses_by_sector(sector: str) -> dict:
     """List courses available in a sector — use when the candidate is unsure of a specific occupation."""
-    return await _api_get("/supply/courses-by-sector", {"sector": sector})
+    return await _api_get("/courses", {"search": sector})
+
 
 
 AGENT_TOOLS = [

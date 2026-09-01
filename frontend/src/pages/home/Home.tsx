@@ -12,7 +12,7 @@ const ROLES = [
     href: '/gov/login',
   },
   {
-    title: 'Training Providers and Institutes',
+    title: 'Colleges and Institutes',
     description: 'Analyze industry relevance, skill gaps, and get curriculum recommendations.',
     icon: BookOpen,
     href: '/login',
