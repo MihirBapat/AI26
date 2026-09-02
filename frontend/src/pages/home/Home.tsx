@@ -42,6 +42,8 @@ export function Home() {
         navigate('/gov/dashboard', { replace: true })
       } else if (user.role === 'candidate') {
         navigate('/std/dashboard', { replace: true })
+      } else if (user.role === 'employer') {
+        navigate('/employer/dashboard', { replace: true })
       }
     }
   }, [isAuthenticated, user, navigate])
