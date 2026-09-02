@@ -13,6 +13,8 @@ import { StdProfile } from './pages/std/Profile'
 import { ConsultationRoom } from './pages/std/ConsultationRoom'
 
 // Employer Module Pages
+import { EmployerLogin } from './pages/auth/employer/EmployerLogin'
+import { EmployerRegister } from './pages/auth/employer/EmployerRegister'
 import { EmployerDashboard } from './pages/employer/EmployerDashboard'
 import { EmployerJobs } from './pages/employer/EmployerJobs'
 import { EmployerCreateJob } from './pages/employer/EmployerCreateJob'
@@ -91,6 +93,8 @@ function App() {
               />
 
               {/* Employer Module Routes */}
+              <Route path="/employer/login" element={<EmployerLogin />} />
+              <Route path="/employer/register" element={<EmployerRegister />} />
               <Route
                 path="/employer/dashboard"
                 element={

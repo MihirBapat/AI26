@@ -12,12 +12,21 @@ from app.dependencies.auth import get_current_user, require_role
 from app.models.user import User
 from app.schemas.auth import (
     MessageResponse,
+    OtpChallengeResponse,
+    ResendOtpRequest,
     TokenResponse,
     UserLogin,
     UserRegister,
     UserResponse,
+    VerifyOtpRequest,
 )
-from app.services.auth_service import authenticate_user, register_user
+from app.services.auth_service import register_user, verify_credentials
+from app.services.otp_service import (
+    generate_and_send_otp,
+    resend_otp,
+    validate_email_deliverability,
+    verify_otp,
+)
 
 settings = get_settings()
 
@@ -38,11 +47,69 @@ def _set_auth_cookie(response: Response, access_token: str):
     )
 
 
-@router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
-def register(req: UserRegister, response: Response, db: Session = Depends(get_db)):
-    """Register a new user account and return an access token."""
+@router.post("/register", response_model=OtpChallengeResponse, status_code=status.HTTP_201_CREATED)
+async def register(req: UserRegister, db: Session = Depends(get_db)):
+    """Register a new user account (is_verified=False) and dispatch verification OTP."""
+    # 1. Pre-validate email deliverability: reject non-existent domains immediately
+    validate_email_deliverability(req.email)
+
+    # 2. Register user
     user = register_user(db, req)
 
+    # 3. Generate and send OTP; rollback user if mail dispatch fails
+    try:
+        temp_token, msg = await generate_and_send_otp(
+            db=db,
+            email=user.email,
+            user_id=user.id,
+            purpose="register",
+            full_name=user.full_name,
+        )
+    except Exception as exc:
+        db.delete(user)
+        db.commit()
+        raise exc
+
+    return OtpChallengeResponse(
+        requires_otp=True,
+        email=user.email,
+        temp_token=temp_token,
+        message=f"Account created successfully! {msg}",
+    )
+
+
+@router.post("/login", response_model=OtpChallengeResponse)
+async def login(req: UserLogin, db: Session = Depends(get_db)):
+    """Verify email and password credentials, and dispatch 6-digit OTP code to email."""
+    user = verify_credentials(db, req)
+
+    temp_token, msg = await generate_and_send_otp(
+        db=db,
+        email=user.email,
+        user_id=user.id,
+        purpose="login",
+        full_name=user.full_name,
+    )
+
+    return OtpChallengeResponse(
+        requires_otp=True,
+        email=user.email,
+        temp_token=temp_token,
+        message=msg,
+    )
+
+
+@router.post("/verify-otp", response_model=TokenResponse)
+def verify_login_otp(req: VerifyOtpRequest, response: Response, db: Session = Depends(get_db)):
+    """Verify 6-digit OTP code, activate/verify account, and issue access token."""
+    user = verify_otp(
+        db=db,
+        email=req.email,
+        otp_code=req.otp,
+        temp_token=req.temp_token,
+        purpose=req.purpose,
+    )
+
     access_token = create_access_token(
         data={"sub": str(user.id), "email": user.email, "role": user.role}
     )
@@ -56,21 +123,21 @@ def register(req: UserRegister, response: Response, db: Session = Depends(get_db
     )
 
 
-@router.post("/login", response_model=TokenResponse)
-def login(req: UserLogin, response: Response, db: Session = Depends(get_db)):
-    """Authenticate existing user credentials and return an access token."""
-    user = authenticate_user(db, req)
-
-    access_token = create_access_token(
-        data={"sub": str(user.id), "email": user.email, "role": user.role}
+@router.post("/resend-otp", response_model=OtpChallengeResponse)
+async def resend_login_otp(req: ResendOtpRequest, db: Session = Depends(get_db)):
+    """Resend a fresh 6-digit OTP code respecting 30s rate-limiting cooldown."""
+    temp_token, msg = await resend_otp(
+        db=db,
+        email=req.email,
+        temp_token=req.temp_token,
+        purpose=req.purpose,
     )
 
-    _set_auth_cookie(response, access_token)
-
-    return TokenResponse(
-        access_token=access_token,
-        token_type="bearer",
-        user=UserResponse.model_validate(user),
+    return OtpChallengeResponse(
+        requires_otp=True,
+        email=req.email,
+        temp_token=temp_token,
+        message=msg,
     )
 
 

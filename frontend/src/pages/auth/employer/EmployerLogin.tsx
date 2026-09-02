@@ -1,13 +1,20 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ChevronLeft, CheckCircle2, Eye, EyeOff, Loader2, AlertCircle, Sparkles, Compass, Target, BookOpen, TrendingUp } from 'lucide-react'
+import {
+  ChevronLeft,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  Loader2,
+  AlertCircle,
+  Building2,
+} from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import type { User } from '@/context/AuthContext'
-import { apiFetch } from '@/lib/api'
 import { OtpVerificationModal } from '@/components/auth/OtpVerificationModal'
 
-export function StdLogin() {
+export function EmployerLogin() {
   const navigate = useNavigate()
   const { login } = useAuth()
 
@@ -21,21 +28,14 @@ export function StdLogin() {
   const [showOtpModal, setShowOtpModal] = useState(false)
   const [tempToken, setTempToken] = useState('')
 
-  const handleAuthSuccess = async (user: User) => {
+  const handleAuthSuccess = (user: User) => {
     setShowOtpModal(false)
-    if (user.role === 'candidate') {
-      try {
-        const profile = await apiFetch<any>('/candidate/profile')
-        if (profile && profile.id && profile.district) {
-          navigate('/std/dashboard', { replace: true })
-        } else {
-          navigate('/std/profile', { replace: true })
-        }
-      } catch {
-        navigate('/std/profile', { replace: true })
-      }
+    if (user.role === 'employer') {
+      navigate('/employer/dashboard', { replace: true })
     } else if (user.role === 'gov') {
       navigate('/gov/dashboard', { replace: true })
+    } else if (user.role === 'candidate') {
+      navigate('/std/dashboard', { replace: true })
     } else {
       navigate('/', { replace: true })
     }
@@ -53,7 +53,7 @@ export function StdLogin() {
         setShowOtpModal(true)
       }
     } catch (err: any) {
-      setErrorMsg(err.message || 'Login failed. Please verify your student / candidate credentials.')
+      setErrorMsg(err.message || 'Login failed. Please verify employer credentials.')
     } finally {
       setIsSubmitting(false)
     }
@@ -61,55 +61,41 @@ export function StdLogin() {
 
   return (
     <div className="min-h-screen flex w-full bg-background font-sans">
-      {/* Left Hero Branding Column */}
-      <div className="hidden lg:flex flex-col w-5/12 bg-gradient-to-br from-primary/95 via-primary to-primary/80 text-primary-foreground p-10 relative overflow-hidden">
-        {/* Background decorative glows */}
-        <div className="absolute -top-24 -right-24 size-72 bg-white/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -left-24 size-72 bg-black/10 rounded-full blur-3xl pointer-events-none" />
-
+      {/* Left Branding Hero Column */}
+      <div className="hidden lg:flex flex-col w-5/12 bg-primary text-primary-foreground p-10 relative">
         <Link
           to="/"
-          className="inline-flex items-center text-sm font-medium hover:opacity-80 transition-opacity w-fit mb-12 relative z-10"
+          className="inline-flex items-center text-sm font-medium hover:opacity-80 transition-opacity w-fit mb-16"
         >
           <ChevronLeft className="size-4 mr-1" />
           Back to selection
         </Link>
 
-        <div className="max-w-md my-auto relative z-10">
-          <div className="inline-flex items-center gap-2 bg-primary-foreground/15 text-primary-foreground px-3.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider mb-6 backdrop-blur-sm border border-primary-foreground/20">
-            <Sparkles className="size-3.5" />
-            Candidate &amp; Student Portal
-          </div>
-
-          <h1 className="text-4xl font-bold mb-5 leading-tight tracking-tight">
-            Navigate Your Career Pathway.
+        <div className="max-w-md mt-8">
+          <h1 className="text-4xl font-bold mb-6 leading-tight">
+            Employer &amp;<br />Industry Portal.
           </h1>
-          <p className="text-primary-foreground/85 text-base mb-10 leading-relaxed">
-            Bridge your skills with real-time Maharashtra industry demand. Discover personalized career GPS pathways, detect skill gaps, and explore 1,890+ government-aligned courses.
+          <p className="text-primary-foreground/80 text-lg mb-12 leading-relaxed">
+            Validate vocational skills, post emerging job requirements, and collaborate with state training institutes to build industry-ready talent.
           </p>
 
-          <div className="space-y-4">
+          <div className="space-y-5">
             {[
-              { icon: Compass, text: 'Personalized Career GPS & Pathway Navigator' },
-              { icon: Target, text: 'AI Skill Gap Detection for Top Industry Roles' },
-              { icon: BookOpen, text: 'Direct Access to 1,890+ Skill India Digital Courses' },
-              { icon: TrendingUp, text: 'Real-Time Maharashtra District Job Demand & Salaries' },
-            ].map((item, i) => {
-              const Icon = item.icon
-              return (
-                <div key={i} className="flex items-center gap-3.5 p-2 rounded-xl hover:bg-primary-foreground/10 transition-colors">
-                  <div className="size-8 rounded-lg bg-primary-foreground/20 flex items-center justify-center shrink-0">
-                    <Icon className="size-4 text-primary-foreground" />
-                  </div>
-                  <span className="text-sm font-medium text-primary-foreground/95">{item.text}</span>
-                </div>
-              )
-            })}
+              'Publish real-time job demand & skill requirements',
+              'Validate vocational courses & curriculum alignment',
+              'Labour market analytics & salary benchmark insights',
+              'Direct connection with skilled candidate pipeline',
+            ].map((item, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <CheckCircle2 className="size-5 text-primary-foreground/60 shrink-0" />
+                <span className="text-sm font-medium">{item}</span>
+              </div>
+            ))}
           </div>
         </div>
 
-        <div className="mt-auto pt-8 border-t border-primary-foreground/20 text-xs text-primary-foreground/70 relative z-10 flex items-center gap-2">
-          <CheckCircle2 className="size-4 text-primary-foreground/80 shrink-0" />
+        <div className="mt-auto pt-8 border-t border-primary-foreground/20 text-xs text-primary-foreground/70 flex items-center gap-2">
+          <Building2 className="size-4 text-primary-foreground/80 shrink-0" />
           Government of Maharashtra &middot; Skill Development Initiative
         </div>
       </div>
@@ -125,12 +111,8 @@ export function StdLogin() {
             Back
           </Link>
 
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold text-foreground mb-2">Candidate Sign In</h2>
-            <p className="text-muted-foreground text-sm">
-              Enter your registered candidate email and password to access your career dashboard
-            </p>
-          </div>
+          <h2 className="text-3xl font-bold text-foreground mb-2 mt-4">Employer Login</h2>
+          <p className="text-muted-foreground mb-6">Enter your registered company email and password</p>
 
           {errorMsg && (
             <div className="mb-6 p-4 rounded-xl border border-destructive/30 bg-destructive/10 text-destructive text-sm flex items-start gap-3">
@@ -146,16 +128,14 @@ export function StdLogin() {
                 type="email"
                 required
                 className="w-full px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
-                placeholder="student@example.com"
+                placeholder="employer@skillbridge.gov.in"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-foreground block">Password</label>
-              </div>
+              <label className="text-sm font-medium text-foreground block">Password</label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -178,7 +158,7 @@ export function StdLogin() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-primary text-primary-foreground py-2.5 rounded-xl font-medium hover:opacity-90 transition-opacity mt-4 flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm"
+              className="w-full bg-primary text-primary-foreground py-2.5 rounded-xl font-medium hover:opacity-90 transition-opacity mt-4 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer shadow-sm"
             >
               {isSubmitting ? (
                 <>
@@ -186,15 +166,15 @@ export function StdLogin() {
                   <span>Authenticating...</span>
                 </>
               ) : (
-                <span>Sign In to Student Portal</span>
+                <span>Sign In</span>
               )}
             </button>
           </form>
 
-          <div className="mt-8 text-center text-sm text-muted-foreground">
-            New to the platform?{' '}
-            <Link to="/std/register" className="text-primary font-medium hover:underline">
-              Create a free candidate account
+          <div className="mt-6 text-center text-sm text-muted-foreground">
+            Don't have an account?{' '}
+            <Link to="/employer/register" className="text-primary font-medium hover:underline">
+              Sign up
             </Link>
           </div>
         </div>

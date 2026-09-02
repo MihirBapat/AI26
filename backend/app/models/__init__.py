@@ -34,10 +34,12 @@ from app.models.lookups import (
 from app.models.skill import CourseSkill, Skill, SkillAlias
 from app.models.user import User
 from app.models.candidate import CandidateProfile
+from app.models.otp import OtpVerification
 __all__ = [
     "TimestampMixin",
     "User",
     "CandidateProfile",
+    "OtpVerification",
 
     "Sector",
     "Domain",

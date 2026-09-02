@@ -27,6 +27,8 @@ export function ProtectedRoute({ children, allowedRole }: ProtectedRouteProps) {
       redirectPath = '/gov/login'
     } else if (allowedRole === 'candidate' || (Array.isArray(allowedRole) && allowedRole.includes('candidate'))) {
       redirectPath = '/std/login'
+    } else if (allowedRole === 'employer' || (Array.isArray(allowedRole) && allowedRole.includes('employer'))) {
+      redirectPath = '/employer/login'
     }
     return <Navigate to={redirectPath} replace />
   }

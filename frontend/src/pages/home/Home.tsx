@@ -21,7 +21,7 @@ const ROLES = [
     title: 'Employer',
     description: 'Validate skills, flag missing requirements, and contribute to demand signals.',
     icon: Briefcase,
-    href: '/login',
+    href: '/employer/login',
   },
   {
     title: 'Candidate / Student',

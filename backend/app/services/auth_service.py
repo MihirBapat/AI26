@@ -48,8 +48,8 @@ def register_user(db: Session, req: UserRegister) -> User:
     return user
 
 
-def authenticate_user(db: Session, req: UserLogin) -> User:
-    """Authenticate user credentials."""
+def verify_credentials(db: Session, req: UserLogin) -> User:
+    """Validate user email & password credentials without committing login session."""
     user = get_user_by_email(db, req.email)
     if not user or not verify_password(req.password, user.password_hash):
         raise HTTPException(
@@ -64,6 +64,12 @@ def authenticate_user(db: Session, req: UserLogin) -> User:
             detail="User account is inactive. Please contact system administrator.",
         )
 
+    return user
+
+
+def authenticate_user(db: Session, req: UserLogin) -> User:
+    """Authenticate user credentials and mark login timestamp."""
+    user = verify_credentials(db, req)
     user.last_login = datetime.now(timezone.utc)
     db.commit()
     db.refresh(user)

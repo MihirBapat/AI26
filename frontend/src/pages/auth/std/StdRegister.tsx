@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ChevronLeft, CheckCircle2, Loader2, AlertCircle, Sparkles, Compass, Target, BookOpen, TrendingUp } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
+import { OtpVerificationModal } from '@/components/auth/OtpVerificationModal'
 
 export function StdRegister() {
   const navigate = useNavigate()
@@ -16,6 +17,15 @@ export function StdRegister() {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+
+  // OTP State
+  const [showOtpModal, setShowOtpModal] = useState(false)
+  const [tempToken, setTempToken] = useState('')
+
+  const handleAuthSuccess = () => {
+    setShowOtpModal(false)
+    navigate('/std/profile', { replace: true })
+  }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -34,8 +44,11 @@ export function StdRegister() {
     setIsSubmitting(true)
 
     try {
-      await register(formData.fullName, formData.email, formData.password, 'candidate')
-      navigate('/std/profile', { replace: true })
+      const res = await register(formData.fullName, formData.email, formData.password, 'candidate')
+      if (res.requires_otp) {
+        setTempToken(res.temp_token)
+        setShowOtpModal(true)
+      }
     } catch (err: any) {
       setErrorMsg(err.message || 'Registration failed. Please try again.')
     } finally {
@@ -198,6 +211,15 @@ export function StdRegister() {
           </div>
         </div>
       </div>
+
+      <OtpVerificationModal
+        open={showOtpModal}
+        email={formData.email}
+        tempToken={tempToken}
+        purpose="register"
+        onSuccess={handleAuthSuccess}
+        onCancel={() => setShowOtpModal(false)}
+      />
     </div>
   )
 }

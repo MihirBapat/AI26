@@ -3,6 +3,8 @@ import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ChevronLeft, CheckCircle2, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
+import type { User } from '@/context/AuthContext'
+import { OtpVerificationModal } from '@/components/auth/OtpVerificationModal'
 
 export function GovLogin() {
   const navigate = useNavigate()
@@ -14,17 +16,29 @@ export function GovLogin() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
+  // OTP State
+  const [showOtpModal, setShowOtpModal] = useState(false)
+  const [tempToken, setTempToken] = useState('')
+
+  const handleAuthSuccess = (user: User) => {
+    setShowOtpModal(false)
+    if (user.role === 'gov') {
+      navigate('/gov/dashboard', { replace: true })
+    } else {
+      navigate('/', { replace: true })
+    }
+  }
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setErrorMsg(null)
     setIsSubmitting(true)
 
     try {
-      const user = await login(email, password)
-      if (user.role === 'gov') {
-        navigate('/gov/dashboard', { replace: true })
-      } else {
-        navigate('/', { replace: true })
+      const res = await login(email, password)
+      if (res.requires_otp) {
+        setTempToken(res.temp_token)
+        setShowOtpModal(true)
       }
     } catch (err: any) {
       setErrorMsg(err.message || 'Login failed. Please verify credentials.')
@@ -141,9 +155,17 @@ export function GovLogin() {
             </Link>
           </div>
 
-
         </div>
       </div>
+
+      <OtpVerificationModal
+        open={showOtpModal}
+        email={email}
+        tempToken={tempToken}
+        purpose="login"
+        onSuccess={handleAuthSuccess}
+        onCancel={() => setShowOtpModal(false)}
+      />
     </div>
   )
 }

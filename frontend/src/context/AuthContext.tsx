@@ -21,12 +21,21 @@ export interface TokenResponse {
   user: User
 }
 
+export interface OtpChallenge {
+  requires_otp: true
+  email: string
+  temp_token: string
+  message: string
+}
+
 interface AuthContextType {
   user: User | null
   isAuthenticated: boolean
   isLoading: boolean
-  login: (email: string, password: string) => Promise<User>
-  register: (full_name: string, email: string, password: string, role: UserRole) => Promise<User>
+  login: (email: string, password: string) => Promise<OtpChallenge>
+  register: (full_name: string, email: string, password: string, role: UserRole) => Promise<OtpChallenge>
+  verifyOtp: (email: string, otp: string, temp_token: string, purpose?: string) => Promise<User>
+  resendOtp: (email: string, temp_token: string, purpose?: string) => Promise<OtpChallenge>
   logout: () => Promise<void>
 }
 
@@ -53,10 +62,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     checkAuthStatus()
   }, [])
 
-  const login = async (email: string, password: string): Promise<User> => {
-    const data = await apiFetch<TokenResponse>('/auth/login', {
+  const login = async (email: string, password: string): Promise<OtpChallenge> => {
+    const data = await apiFetch<OtpChallenge>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
+    })
+    return data
+  }
+
+  const register = async (
+    full_name: string,
+    email: string,
+    password: string,
+    role: UserRole
+  ): Promise<OtpChallenge> => {
+    const data = await apiFetch<OtpChallenge>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ full_name, email, password, role }),
+    })
+    return data
+  }
+
+  const verifyOtp = async (
+    email: string,
+    otp: string,
+    temp_token: string,
+    purpose: string = 'login'
+  ): Promise<User> => {
+    const data = await apiFetch<TokenResponse>('/auth/verify-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email, otp, temp_token, purpose }),
     })
 
     if (data.access_token) {
@@ -66,22 +101,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return data.user
   }
 
-  const register = async (
-    full_name: string,
+  const resendOtp = async (
     email: string,
-    password: string,
-    role: UserRole
-  ): Promise<User> => {
-    const data = await apiFetch<TokenResponse>('/auth/register', {
+    temp_token: string,
+    purpose: string = 'login'
+  ): Promise<OtpChallenge> => {
+    const data = await apiFetch<OtpChallenge>('/auth/resend-otp', {
       method: 'POST',
-      body: JSON.stringify({ full_name, email, password, role }),
+      body: JSON.stringify({ email, temp_token, purpose }),
     })
-
-    if (data.access_token) {
-      localStorage.setItem('access_token', data.access_token)
-    }
-    setUser(data.user)
-    return data.user
+    return data
   }
 
   const logout = async (): Promise<void> => {
@@ -95,7 +124,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-
   return (
     <AuthContext.Provider
       value={{
@@ -104,6 +132,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         login,
         register,
+        verifyOtp,
+        resendOtp,
         logout,
       }}
     >

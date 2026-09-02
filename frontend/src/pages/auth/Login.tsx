@@ -5,7 +5,9 @@ import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/context/AuthContext'
+import type { User } from '@/context/AuthContext'
 import { AlertCircle, Loader2 } from 'lucide-react'
+import { OtpVerificationModal } from '@/components/auth/OtpVerificationModal'
 
 export function Login() {
   const navigate = useNavigate()
@@ -16,21 +18,33 @@ export function Login() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
+  // OTP State
+  const [showOtpModal, setShowOtpModal] = useState(false)
+  const [tempToken, setTempToken] = useState('')
+
+  const handleAuthSuccess = (user: User) => {
+    setShowOtpModal(false)
+    if (user.role === 'gov') {
+      navigate('/gov/dashboard', { replace: true })
+    } else if (user.role === 'employer') {
+      navigate('/employer/dashboard', { replace: true })
+    } else if (user.role === 'candidate') {
+      navigate('/std/dashboard', { replace: true })
+    } else {
+      navigate('/', { replace: true })
+    }
+  }
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setErrorMsg(null)
     setIsSubmitting(true)
 
     try {
-      const user = await login(email, password)
-      if (user.role === 'gov') {
-        navigate('/gov/dashboard', { replace: true })
-      } else if (user.role === 'employer') {
-        navigate('/employer/dashboard', { replace: true })
-      } else if (user.role === 'candidate') {
-        navigate('/std/dashboard', { replace: true })
-      } else {
-        navigate('/', { replace: true })
+      const res = await login(email, password)
+      if (res.requires_otp) {
+        setTempToken(res.temp_token)
+        setShowOtpModal(true)
       }
     } catch (err: any) {
       setErrorMsg(err.message || 'Invalid email or password.')
@@ -102,7 +116,7 @@ export function Login() {
                 type="button"
                 onClick={() => {
                   setEmail('employer@skillbridge.gov.in')
-                  setPassword('Employer@123')
+                  setPassword('employer@123')
                 }}
                 className="text-xs text-primary/80 hover:text-primary underline cursor-pointer"
               >
@@ -119,6 +133,15 @@ export function Login() {
           </CardFooter>
         </form>
       </Card>
+
+      <OtpVerificationModal
+        open={showOtpModal}
+        email={email}
+        tempToken={tempToken}
+        purpose="login"
+        onSuccess={handleAuthSuccess}
+        onCancel={() => setShowOtpModal(false)}
+      />
     </main>
   )
 }

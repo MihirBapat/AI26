@@ -76,3 +76,44 @@ class MessageResponse(BaseModel):
 
     message: str
 
+
+class OtpChallengeResponse(BaseModel):
+    """Response returned when login credentials are correct and OTP verification is required."""
+
+    requires_otp: bool = True
+    email: str
+    temp_token: str
+    message: str
+
+
+class VerifyOtpRequest(BaseModel):
+    """Payload for verifying 6-digit OTP code."""
+
+    email: EmailStr
+    otp: str = Field(..., min_length=6, max_length=6, description="6-digit verification code")
+    temp_token: str
+    purpose: str = Field(default="login")
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, v: str) -> str:
+        return v.strip().lower()
+
+    @field_validator("otp")
+    @classmethod
+    def clean_otp(cls, v: str) -> str:
+        return v.strip()
+
+
+class ResendOtpRequest(BaseModel):
+    """Payload for requesting an OTP code resend."""
+
+    email: EmailStr
+    temp_token: str
+    purpose: str = Field(default="login")
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, v: str) -> str:
+        return v.strip().lower()
+

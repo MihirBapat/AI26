@@ -3,9 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
   BriefcaseBusiness,
-  Brain,
   ChartNoAxesCombined,
-  GraduationCap,
   BadgeCheck,
   MessageSquareText,
   Sparkles,
@@ -49,21 +47,21 @@ const NAV_ITEMS = [
     href: '/employer/jobs',
     icon: BriefcaseBusiness,
   },
-  {
-    title: 'Skills Taxonomy',
-    href: '/employer/skills',
-    icon: Brain,
-  },
+  // {
+  //   title: 'Skills Taxonomy',
+  //   href: '/employer/skills',
+  //   icon: Brain,
+  // },
   {
     title: 'Analytics',
     href: '/employer/analytics',
     icon: ChartNoAxesCombined,
   },
-  {
-    title: 'Course Matching',
-    href: '/employer/course-matches',
-    icon: GraduationCap,
-  },
+  // {
+  //   title: 'Course Matching',
+  //   href: '/employer/course-matches',
+  //   icon: GraduationCap,
+  // },
   {
     title: 'Validations',
     href: '/employer/validations',

@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/context/AuthContext'
-import type { UserRole } from '@/context/AuthContext'
+import type { User, UserRole } from '@/context/AuthContext'
 import { AlertCircle, Loader2 } from 'lucide-react'
+import { OtpVerificationModal } from '@/components/auth/OtpVerificationModal'
 
 export function Register() {
   const navigate = useNavigate()
@@ -19,6 +20,23 @@ export function Register() {
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+
+  // OTP State
+  const [showOtpModal, setShowOtpModal] = useState(false)
+  const [tempToken, setTempToken] = useState('')
+
+  const handleAuthSuccess = (user: User) => {
+    setShowOtpModal(false)
+    if (user.role === 'gov') {
+      navigate('/gov/dashboard', { replace: true })
+    } else if (user.role === 'employer') {
+      navigate('/employer/dashboard', { replace: true })
+    } else if (user.role === 'candidate') {
+      navigate('/std/profile', { replace: true })
+    } else {
+      navigate('/', { replace: true })
+    }
+  }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -37,15 +55,10 @@ export function Register() {
     setIsSubmitting(true)
 
     try {
-      const user = await register(fullName, email, password, role)
-      if (user.role === 'gov') {
-        navigate('/gov/dashboard', { replace: true })
-      } else if (user.role === 'employer') {
-        navigate('/employer/dashboard', { replace: true })
-      } else if (user.role === 'candidate') {
-        navigate('/std/dashboard', { replace: true })
-      } else {
-        navigate('/', { replace: true })
+      const res = await register(fullName, email, password, role)
+      if (res.requires_otp) {
+        setTempToken(res.temp_token)
+        setShowOtpModal(true)
       }
     } catch (err: any) {
       setErrorMsg(err.message || 'Registration failed. Please try again.')
@@ -167,6 +180,15 @@ export function Register() {
           </CardFooter>
         </form>
       </Card>
+
+      <OtpVerificationModal
+        open={showOtpModal}
+        email={email}
+        tempToken={tempToken}
+        purpose="register"
+        onSuccess={handleAuthSuccess}
+        onCancel={() => setShowOtpModal(false)}
+      />
     </main>
   )
 }
